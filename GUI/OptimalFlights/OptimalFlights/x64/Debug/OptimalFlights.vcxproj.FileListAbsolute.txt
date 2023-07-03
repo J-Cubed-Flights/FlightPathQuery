@@ -1,0 +1,4 @@
+C:\Users\jason\Documents\GitHub\J-Cubed-Flights\GUI\OptimalFlights\OptimalFlights\x64\Debug\OptimalFlights.vcxproj.AssemblyReference.cache
+C:\Users\jason\Documents\GitHub\J-Cubed-Flights\GUI\OptimalFlights\OptimalFlights\x64\Debug\OptimalFlights.vcxproj.SuggestedBindingRedirects.cache
+C:\Users\jason\Documents\GitHub\J-Cubed-Flights\GUI\OptimalFlights\OptimalFlights\x64\Debug\OptimalFlights.MyForm.resources
+C:\Users\jason\Documents\GitHub\J-Cubed-Flights\GUI\OptimalFlights\OptimalFlights\x64\Debug\OptimalFlights.vcxproj.GenerateResource.cache
