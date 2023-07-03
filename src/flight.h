@@ -12,7 +12,7 @@ using namespace std;
 
 class Flight {
 private:
-    string departureAirport; // should be same name as the Airport Node it is stored in
+    string departureAirport; // should be same IATA as the Airport object it is stored in
     string arrivalAirport;
     int flightCount;
     int totalMinutes;
@@ -24,6 +24,8 @@ public:
         totalMinutes = 0;
     }
 
+    string getDeparture() const {return departureAirport;}
+    string getArrival() const {return arrivalAirport;}
     int getFlightCount() const {return flightCount;}
     int getTotalMinutes() const {return totalMinutes;}
     int getAverageFlightTime() const {return (flightCount/totalMinutes);}

@@ -24,8 +24,8 @@ public:
         airportCode = std::move(a);
     }
 
-    string getAirportName() {return name;}
-    string getAirportCode() {return airportCode;}
+    string getAirportName() const {return name;}
+    string getAirportCode() const {return airportCode;}
 
     void updateFlight(string &arriveCode, int flightTime) {
         auto it = flights.find(arriveCode);
