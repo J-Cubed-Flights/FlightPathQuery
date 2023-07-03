@@ -5,6 +5,7 @@
 
 
 #include <string>
+#include <utility>
 
 using namespace std;
 
@@ -16,16 +17,16 @@ private:
     int flightCount;
     int totalMinutes;
 public:
-    Flight(string depart, string arrive) {
-        departureAirport = depart;
-        arrivalAirport = arrive;
+    Flight(string &depart, string &arrive) {
+        departureAirport = std::move(depart);
+        arrivalAirport = std::move(arrive);
         flightCount = 0;
         totalMinutes = 0;
     }
 
-    int getFlightCount() {return flightCount;}
-    int getTotalMinutes() {return totalMinutes;}
-    int getAverageFlightTime() {return (flightCount/totalMinutes);}
+    int getFlightCount() const {return flightCount;}
+    int getTotalMinutes() const {return totalMinutes;}
+    int getAverageFlightTime() const {return (flightCount/totalMinutes);}
 
     int addFlightTime(int time) {
         flightCount++;

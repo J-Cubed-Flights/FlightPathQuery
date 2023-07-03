@@ -18,8 +18,8 @@ private:
     unordered_map<string, Airport> airports; // string stores the Departure Airport's IATA Code (i.e. JFK)
 public:
     // public function to add a flight into the unordered_map of airports
-    void addFlight(string airportFullName, string departCode, string arriveCode, int flightTime) {
-        unordered_map<string, Airport>::iterator it = airports.find(departCode);
+    void addFlight(string &airportFullName, string &departCode, string &arriveCode, int flightTime) {
+        auto it = airports.find(departCode);
 
         if (it != airports.end()) {
             it->second.updateFlight(arriveCode, flightTime);
