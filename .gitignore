@@ -1,0 +1,11 @@
+# IDE files to ignore in root directory
+.idea/
+cmake-build-debug/
+CMakeLists.txt
+
+# IDE files to ignore in src directory
+src/.idea/
+src/cmake-build-debug/
+src/CMakeLists.txt
+
+# IDE Files to ignore in GUI directory
