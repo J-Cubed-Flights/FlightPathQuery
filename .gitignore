@@ -9,3 +9,8 @@ src/cmake-build-debug/
 src/CMakeLists.txt
 
 # IDE Files to ignore in GUI directory
+GUI/.vs/
+GUI/CppProperties.json
+GUI/x64/Debug/OptimalFlights.exe.metagen
+GUI/x64/Debug/OptimalFlights.pdb
+GUI/OptimalFlights/x64/
