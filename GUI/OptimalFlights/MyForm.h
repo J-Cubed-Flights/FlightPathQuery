@@ -35,7 +35,7 @@ namespace OptimalFlights {
 				delete components;
 			}
 		}
-	//TODO: Add FlightGraph as a member variable here.
+	//TODO: Add DirectedGraph as a member variable here.
 	private: System::Windows::Forms::Button^ searchButton;
 	private: System::Windows::Forms::TextBox^ start;
 	private: System::Windows::Forms::TextBox^ end;
