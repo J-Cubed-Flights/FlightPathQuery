@@ -35,12 +35,10 @@ namespace OptimalFlights {
 				delete components;
 			}
 		}
+	//TODO: Add FlightGraph as a member variable here.
 	private: System::Windows::Forms::Button^ searchButton;
 	private: System::Windows::Forms::TextBox^ start;
 	private: System::Windows::Forms::TextBox^ end;
-
-
-
 
 	private: System::Windows::Forms::Label^ startText;
 	private: System::Windows::Forms::Label^ destText;
@@ -59,20 +57,11 @@ namespace OptimalFlights {
 	private: System::Windows::Forms::Label^ bTime;
 	private: System::Windows::Forms::Label^ resultText;
 
-
-
-
 	private: System::Windows::Forms::Label^ elapsedtimeText;
 	private: System::Windows::Forms::Button^ clearButton;
 	private: System::Windows::Forms::ListBox^ airportList;
 
 	private: System::Windows::Forms::Label^ airportTitle;
-
-
-
-
-
-
 
 
 	protected:
@@ -282,6 +271,7 @@ namespace OptimalFlights {
 		}
 #pragma endregion
 	private: System::Void formLoad(System::Object^ sender, System::EventArgs^ e) {
+		//TODO: Replace this code with function adding all the airport ID's to the list.
 		for (int i = 0; i < 129; i++) {
 			airportList->Items->Add(i);
 		}
