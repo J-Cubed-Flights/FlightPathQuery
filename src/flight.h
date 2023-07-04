@@ -28,7 +28,7 @@ public:
     string getArrival() const {return arrivalAirport;}
     int getFlightCount() const {return flightCount;}
     int getTotalMinutes() const {return totalMinutes;}
-    int getAverageFlightTime() const {return (flightCount/totalMinutes);}
+    int getAverageFlightTime() const {return (totalMinutes/flightCount);}
 
     int addFlightTime(int time) {
         flightCount++;
