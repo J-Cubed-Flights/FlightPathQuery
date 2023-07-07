@@ -41,6 +41,15 @@ public:
         // TODO: return a sorted list of airport names in the following format: "[iata] - [airport name]"
         // I will complete this tomorrow - Jason (7/3/2023)
         vector<string> result;
+        string data;
+
+        // Honestly think if we want it to be a sorted list we should just create sorted map
+        // Then we should just be able to do the following - Jan (7/7/2023)
+        for(auto it = airports.begin(); it != airports.end(); it++)
+        {
+            data = it->first + " - " + it->second;
+            result.push_back(data);
+        }
         return result;
     }
 };
