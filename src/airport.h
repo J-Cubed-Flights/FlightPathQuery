@@ -17,8 +17,8 @@ class Airport {
 private:
     string name; // full name of airport, may not be needed later on
     string airportCode; // 3-letter IATA Code (i.e. JFK)
-    unordered_map<string, Flight> flights; // string stores the Arrival Airport's IATA Code (i.e. JFK)
 public:
+    unordered_map<string, Flight> flights; // string stores the Arrival Airport's IATA Code (i.e. JFK)
     Airport(string &n, string &a) {
         name = n;
         airportCode = a;
