@@ -18,8 +18,8 @@ private:
     int totalMinutes;
 public:
     Flight(string &depart, string &arrive) {
-        departureAirport = std::move(depart);
-        arrivalAirport = std::move(arrive);
+        departureAirport = depart;
+        arrivalAirport = arrive;
         flightCount = 0;
         totalMinutes = 0;
     }

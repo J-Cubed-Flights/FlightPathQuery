@@ -82,14 +82,14 @@ ACT,Waco Regional,Waco,TX,USA,31.61128833,-97.23051917
 ACV,Arcata,Arcata Eureka,CA,USA,40.97811528,-124.1086189
 ACY,Atlantic City International,Atlantic City,NJ,USA,39.45758333,-74.57716667
 ADK,Adak,Adak,AK,USA,51.87796389,-176.6460306
-ADQ,Kodiak ,Kodiak,AK,USA,57.74996778,-152.4938553
+ADQ,Kodiak,Kodiak,AK,USA,57.74996778,-152.4938553
 AEX,Alexandria International,Alexandria,LA,USA,31.32737167,-92.54855611
-AGS,Bush ,Augusta,GA,USA,33.369955,-81.96449611
+AGS,Augusta Regional,Augusta,GA,USA,33.369955,-81.96449611
 AKN,King Salmon,King Salmon,AK,USA,58.67680167,-156.6492175
 ALB,Albany Cty,Albany,NY,USA,42.74811944,-73.80297861
 ALO,Waterloo Municipal,Waterloo,IA,USA,42.55708139,-92.40034361
 AMA,Amarillo International,Amarillo,TX,USA,35.2193725,-101.7059272
-APN,Alpena County Regional ,Alpena,MI,USA,45.0780675,-83.56028583
+APN,Alpena County Regional,Alpena,MI,USA,45.0780675,-83.56028583
 ART,Watertown Intl,Watertown,NY,USA,43.99192222,-76.02173861
 ASE,Aspen-Pitkin Co Sardy ,Aspen,CO,USA,39.22316,-106.868845
 ATW,Outagamie County Regional,Appleton,WI,USA,44.25740806,-88.51947556
@@ -152,6 +152,7 @@ DRT,Del Rio International,Del Rio,TX,USA,29.37181222,-100.9232339
 DSM,Des Moines International,Des Moines,IA,USA,41.53493306,-93.66068222
 DVL,Devils Lake Municipal-Knoke ,Devils Lake,ND,USA,48.11424528,-98.90877833
 EAU,Chippewa Valley Regional,Eau Claire,WI,USA,44.86525722,-91.48507194
+ECP,Northwest Florida Beaches International,Bay County,FL,USA,30.3549,-85.7995
 EGE,Eagle County Regional,Eagle,CO,USA,39.64256778,-106.9176953
 EKO,Elko Regional,Elko,NV,USA,40.82492611,-115.7916964
 ELM,Elmira Corning Regional,Elmira,NY,USA,42.15991361,-76.89144333
@@ -202,6 +203,7 @@ HSV,Huntsville International ,Huntsville,AL,USA,34.6404475,-86.77310944
 HTS,Tri-State Walker-Long ,Huntington,WV,USA,38.36666667,-82.55802778
 HYA,Barnstable Mun Boardman Polando ,Hyannis,MA,USA,41.66933639,-70.28035583
 HYS,Hays Municipal,Hays,KS,USA,38.84494167,-99.27403361
+IAG,Niagara Falls International,Niagara Falls,NY,USA,43.1009,-78.9409
 ICT,Wichita Mid-Continent,Wichita,KS,USA,37.64995889,-97.43304583
 IDA,Idaho Falls Regional,Idaho Falls,ID,USA,43.51455556,-112.0701667
 ILG,New Castle County ,Wilmington,DE,USA,39.67872222,-75.60652778
@@ -225,6 +227,7 @@ LAN,Capital City,Lansing,MI,USA,42.7787,-84.58735806
 LAR,Laramie Regional,Laramie,WY,USA,41.31205,-105.6749864
 LAW,Lawton-Ft Sill Regional,Lawton,OK,USA,34.56771444,-98.41663667
 LBB,Lubbock International,Lubbock,TX,USA,33.66363889,-101.8227778
+LBE,Arnold Palmer Regional,Latrobe,PA,USA,40.2724,-79.4055
 LCH,Lake Charles Regional,Lake Charles,LA,USA,30.1260975,-93.22340361
 LEX,Blue Grass ,Lexington,KY,USA,38.03697222,-84.60538889
 LFT,Lafayette Regional,Lafayette,LA,USA,30.20527972,-91.987655
@@ -270,6 +273,7 @@ OTH,North Bend Muni,North Bend,OR,USA,43.41713889,-124.2460278
 OTZ,Ralph Wien Memorial,Kotzebue,AK,USA,66.88467694,-162.5985497
 OXR,Oxnard,Oxnard,CA,USA,34.20080083,-119.2072164
 PAH,Barkley Regional,Paducah,KY,USA,37.06083333,-88.77375
+PBG,Plattsburgh International,Plattsburgh,NY,USA,44.6521,-73.4679
 PFN,Panama City-Bay County International,Panama City,FL,USA,30.21208333,-85.68280556
 PHF,Newport News Williamsburg International,Newport News,VA,USA,37.13189556,-76.4929875
 PIA,Greater Peoria Regional,Peoria,IL,USA,40.66424333,-89.69330556
@@ -332,6 +336,7 @@ TWF,Joslin Field - Magic Valley,Twin Falls,ID,USA,42.48180389,-114.4877356
 TXK,Texarkana Regional-Webb ,Texarkana,AR,USA,33.45370806,-93.99102
 TYR,Tyler Pounds ,Tyler,TX,USA,32.35413889,-95.40238611
 TYS,McGhee-Tyson,Knoxville,TN,USA,35.81248722,-83.99285583
+UST,Northeast Florida Regional,St. Augustine,FL,USA,29.9544,81.3429
 VEL,Vernal,Vernal,UT,USA,40.44090167,-109.5099203
 VLD,Valdosta Regional,Valdosta,GA,USA,30.7825,-83.27672222
 VPS,Eglin Air Force Base,Valparaiso,FL,USA,30.48325,-86.5254

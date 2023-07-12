@@ -8,7 +8,6 @@
 #include <string>
 #include <sstream>
 #include <unordered_map>
-#include <chrono>
 #include "directedgraph.h"
 
 
@@ -33,7 +32,7 @@ void parseData(DirectedGraph& flights, string airportFile, string flightFile) {
             getline(str, iata, ',');
             getline(str, airport, ',');
             //now insert into the map.
-            airportNames.insert(make_pair(iata, airport));
+            airportNames.emplace(iata, airport);
         }
         file.close();
     } else {

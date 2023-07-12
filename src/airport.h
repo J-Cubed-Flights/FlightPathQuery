@@ -20,8 +20,8 @@ private:
     unordered_map<string, Flight> flights; // string stores the Arrival Airport's IATA Code (i.e. JFK)
 public:
     Airport(string &n, string &a) {
-        name = std::move(n);
-        airportCode = std::move(a);
+        name = n;
+        airportCode = a;
     }
 
     string getAirportName() const {return name;}
@@ -36,7 +36,7 @@ public:
             Flight newFlight(airportCode, arriveCode);
             newFlight.addFlightTime(flightTime);
 
-            flights.insert(make_pair(arriveCode, newFlight));
+            flights.emplace(arriveCode, newFlight);
         }
     }
 };
