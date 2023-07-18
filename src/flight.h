@@ -17,11 +17,18 @@ private:
     int flightCount;
     int totalMinutes;
 public:
+    Flight();
     Flight(string &depart, string &arrive) {
         departureAirport = depart;
         arrivalAirport = arrive;
         flightCount = 0;
         totalMinutes = 0;
+    }
+    Flight(const Flight &copy) {
+        departureAirport = copy.getDeparture();
+        arrivalAirport = copy.getArrival();
+        flightCount = copy.getFlightCount();
+        totalMinutes = copy.getTotalMinutes();
     }
 
     string getDeparture() const {return departureAirport;}
@@ -30,7 +37,7 @@ public:
     int getTotalMinutes() const {return totalMinutes;}
     int getAverageFlightTime() const {return (totalMinutes/flightCount);}
 
-    int addFlightTime(int time) {
+    void addFlightTime(int time) {
         flightCount++;
         totalMinutes += time;
     }

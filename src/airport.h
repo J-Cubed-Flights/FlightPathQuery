@@ -19,13 +19,13 @@ private:
     string airportCode; // 3-letter IATA Code (i.e. JFK)
 public:
     unordered_map<string, Flight> flights; // string stores the Arrival Airport's IATA Code (i.e. JFK)
-    Airport(string &n, string &a) {
-        name = n;
-        airportCode = a;
-    }
+    //this is just for making a null airport (used to ensure the getAirport function doesn't cause an error
+    Airport() : name(""), airportCode("") {}
+    Airport(string &n, string &a) : name(n), airportCode(a) {}
 
     string getAirportName() const {return name;}
     string getAirportCode() const {return airportCode;}
+    bool isNull() {return name.length() == 0;}
 
     void updateFlight(string &arriveCode, int flightTime) {
         auto it = flights.find(arriveCode);

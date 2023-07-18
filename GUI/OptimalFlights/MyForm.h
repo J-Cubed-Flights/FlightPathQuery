@@ -50,11 +50,13 @@ namespace OptimalFlights {
 
 	private: System::Windows::Forms::Label^ DjikstraText;
 	private: System::Windows::Forms::Label^ dTime;
+	private: System::Windows::Forms::Label^ floydText;
+	private: System::Windows::Forms::Label^ fTime;
 
 
 
-	private: System::Windows::Forms::Label^ bfsText;
-	private: System::Windows::Forms::Label^ bTime;
+
+
 	private: System::Windows::Forms::Label^ resultText;
 
 	private: System::Windows::Forms::Label^ elapsedtimeText;
@@ -88,8 +90,8 @@ namespace OptimalFlights {
 			this->resultList = (gcnew System::Windows::Forms::ListBox());
 			this->DjikstraText = (gcnew System::Windows::Forms::Label());
 			this->dTime = (gcnew System::Windows::Forms::Label());
-			this->bfsText = (gcnew System::Windows::Forms::Label());
-			this->bTime = (gcnew System::Windows::Forms::Label());
+			this->floydText = (gcnew System::Windows::Forms::Label());
+			this->fTime = (gcnew System::Windows::Forms::Label());
 			this->resultText = (gcnew System::Windows::Forms::Label());
 			this->elapsedtimeText = (gcnew System::Windows::Forms::Label());
 			this->clearButton = (gcnew System::Windows::Forms::Button());
@@ -166,30 +168,30 @@ namespace OptimalFlights {
 			// dTime
 			// 
 			this->dTime->AutoSize = true;
-			this->dTime->Location = System::Drawing::Point(638, 64);
+			this->dTime->Location = System::Drawing::Point(666, 64);
 			this->dTime->Name = L"dTime";
 			this->dTime->Size = System::Drawing::Size(43, 16);
 			this->dTime->TabIndex = 9;
 			this->dTime->Text = L"---------";
 			// 
-			// bfsText
+			// floydText
 			// 
-			this->bfsText->AutoSize = true;
-			this->bfsText->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 12));
-			this->bfsText->Location = System::Drawing::Point(554, 92);
-			this->bfsText->Name = L"bfsText";
-			this->bfsText->Size = System::Drawing::Size(51, 25);
-			this->bfsText->TabIndex = 10;
-			this->bfsText->Text = L"BFS";
+			this->floydText->AutoSize = true;
+			this->floydText->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 12));
+			this->floydText->Location = System::Drawing::Point(488, 92);
+			this->floydText->Name = L"floydText";
+			this->floydText->Size = System::Drawing::Size(142, 25);
+			this->floydText->TabIndex = 10;
+			this->floydText->Text = L"Floyd Warshall";
 			// 
-			// bTime
+			// fTime
 			// 
-			this->bTime->AutoSize = true;
-			this->bTime->Location = System::Drawing::Point(636, 99);
-			this->bTime->Name = L"bTime";
-			this->bTime->Size = System::Drawing::Size(43, 16);
-			this->bTime->TabIndex = 11;
-			this->bTime->Text = L"---------";
+			this->fTime->AutoSize = true;
+			this->fTime->Location = System::Drawing::Point(666, 99);
+			this->fTime->Name = L"fTime";
+			this->fTime->Size = System::Drawing::Size(43, 16);
+			this->fTime->TabIndex = 11;
+			this->fTime->Text = L"---------";
 			// 
 			// resultText
 			// 
@@ -252,8 +254,8 @@ namespace OptimalFlights {
 			this->Controls->Add(this->clearButton);
 			this->Controls->Add(this->elapsedtimeText);
 			this->Controls->Add(this->resultText);
-			this->Controls->Add(this->bTime);
-			this->Controls->Add(this->bfsText);
+			this->Controls->Add(this->fTime);
+			this->Controls->Add(this->floydText);
 			this->Controls->Add(this->dTime);
 			this->Controls->Add(this->DjikstraText);
 			this->Controls->Add(this->resultList);
@@ -297,11 +299,11 @@ namespace OptimalFlights {
 		resultList->Items->Add(start->Text + L" " + end->Text);
 		//TODO: Add results here...
 		dTime->Text = L"0.000ms";
-		bTime->Text = L"0.000ms";
+		fTime->Text = L"0.000ms";
 	}
 	private: System::Void clearButton_Click(System::Object^ sender, System::EventArgs^ e) {
 		dTime->Text = L"---------";
-		bTime->Text = L"---------";
+		fTime->Text = L"---------";
 		resultList->Items->Clear();
 		resultList->Items->Add(L"Results appear here");
 		start->Clear();

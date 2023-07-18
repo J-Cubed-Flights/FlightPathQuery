@@ -16,7 +16,8 @@ using namespace std;
 class DirectedGraph {
 private:
     unordered_map<string, Airport> airports; // string stores the Departure Airport's IATA Code (i.e. JFK)
-    void quickSort(vector<string>& arr, int l, int r) {
+    Airport nullAirport; //store a null airport, which is used in getAirport
+    void quickSort(vector<string> &arr, int l, int r) {
         //we will have the first index be the pivot.
         if(l >= r) {
             return;
@@ -47,6 +48,17 @@ private:
         quickSort(arr, r + 1, end);
     }
 public:
+    bool validCode(string &code) {
+        return airports.find(code) != airports.end();
+    }
+    Airport& getAirport(string &code) {
+        auto it = airports.find(code);
+        if(it == airports.end()) {
+            return nullAirport;
+        }
+        return airports.at(code);
+    }
+
     // public function to add a flight into the unordered_map of airports
     void addFlight(string &airportFullName, string &departCode, string &arriveFullName, string &arriveCode, int flightTime) {
         auto it = airports.find(departCode);
