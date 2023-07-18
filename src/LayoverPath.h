@@ -32,8 +32,8 @@ int LayoverPath::calculateFlightTime()
 int LayoverPath::calculateWithLayover()
 {
     // Here we are calculating total time with layovers in mind.
-    // Adding 2 hours aka 120 minutes per stop to totalFlightTime.
-    totalWithLayover = 120 * stops.size() + totalFlightTime;
+    // Adding 2 hours aka 120 minutes per extra stop to totalFlightTime.
+    totalWithLayover = 120 * (stops.size() - 1) + totalFlightTime;
     return totalWithLayover;
 }
 
