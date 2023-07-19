@@ -13,7 +13,6 @@
 
 using namespace std;
 
-
 class DirectedGraph {
 private:
     unordered_map<string, Airport> airports; // string stores the Departure Airport's IATA Code (i.e. JFK)
@@ -54,7 +53,9 @@ private:
 
     //TODO:build floyd warshall map generator
     //generates the floyd warshall  map if it is the first time.
-    void generateMap();
+    void generateMap() {
+
+    }
 public:
     bool validCode(string &code) {
         return airports.find(code) != airports.end();
@@ -108,6 +109,7 @@ public:
     int size() {
         return airports.size();
     }
+    //generate the 3 shortest paths as a vector
     vector<FlightPath> djikstraPath(DirectedGraph &airports, string &originCode, string &destinationCode)
     {
         // This is intended to create the flight path from start to finish.
@@ -160,8 +162,8 @@ public:
             it++;
         } ***/
     }
-    //generate path using floyd warshall algorithm
-    void floydPath(DirectedGraph &graph, std::string &origin, std::string &destination) {
+    //generate the 3 shortest paths using floyd warshall algorithm
+    vector<FlightPath> floydPath(DirectedGraph &graph, std::string &origin, std::string &destination) {
         //TODO
         if(floydMap.size() == 0) {//if the floydMap was never made, generate it first.
             generateMap();
@@ -169,5 +171,63 @@ public:
     }
 };
 
+void parseData(DirectedGraph& flights, string airportFile, string flightFile) {
+    //first, get all the airport iata values.
+    unordered_map<string, string> airportNames;
+    fstream file (airportFile);
+    if(file.is_open())
+    {
+        //skip the first line, since it is the column names.
+        string line;
+        getline(file, line);
+        //while the lines exist
+        while(getline(file, line))
+        {
+            stringstream str(line);
+            //just need the first two values: the IATA & Airport name
+            string iata, airport;
+            getline(str, iata, ',');
+            getline(str, airport, ',');
+            //now insert into the map.
+            airportNames.emplace(iata, airport);
+        }
+        file.close();
+    } else {
+        return;
+    }
+    //now open the flights file to start adding flights to the graph
+    file.open(flightFile);
+    if(file.is_open())
+    {
+        string line;
+        vector<string> row;
+        //skip first line (column names)
+        getline(file, line);
+        //while the lines exist
+        while(getline(file, line))
+        {
+            row.clear();
+            string word;
+            stringstream str(line);
+            while(getline(str, word, ',')) {
+                row.push_back(word);
+            }
+            //the columns are as follows: (index),flight_date,origin,dest,cancelled,distance,actual_elapsed_time
+            //we need indexes 2,3,4,6 -> origin,dest,cancelled, actual_elapsed_time
+            try {//in case there is a parsing error, skip the line and continue.
+                if (row[4] == "0") {//if the flight was not canceled, add it.
+                    string &origin = row[2];
+                    string &dest = row[3];
+                    int time = stoi(row[6]);
+                    flights.addFlight(airportNames[origin], origin, airportNames[dest], dest, time);
+                }
+            } catch (...) {
+            }
+        }
+    }
+    else {
+        return;
+    }
+}
 
 #endif //J_CUBED_FLIGHTS_DIRECTEDGRAPH_H
