@@ -5,6 +5,7 @@
 
 
 #include "airport.h"
+#include "flightpath.h"
 
 #include <unordered_map>
 #include <string>
@@ -47,6 +48,13 @@ private:
         quickSort(arr, pivotI, r - 1);
         quickSort(arr, r + 1, end);
     }
+    //the matrix below will be built the first time that the floydPath function.
+    //this optimized the time needed to make the map after the first time it is called.
+    unordered_map<string, unordered_map<string, int>> floydMap;
+
+    //TODO:build floyd warshall map generator
+    //generates the floyd warshall  map if it is the first time.
+    void generateMap();
 public:
     bool validCode(string &code) {
         return airports.find(code) != airports.end();
@@ -99,6 +107,65 @@ public:
     }
     int size() {
         return airports.size();
+    }
+    vector<FlightPath> djikstraPath(DirectedGraph &airports, string &originCode, string &destinationCode)
+    {
+        // This is intended to create the flight path from start to finish.
+        // The data then can be used to calculate flight time.
+        vector<FlightPath> paths;
+        //make sure that both the origin and destination are valid
+        if(airports.validCode(originCode) || airports.validCode(destinationCode)) {
+            return paths;
+        }
+
+        //this keeps track of the predecessor node/airport.
+        //this will be used to build the final path.
+        unordered_map<string, string> previous;
+        //set to keep track of airports that have already been visited.
+        unordered_set<string> visited;
+        //we will start at
+        visited.emplace(originCode);
+
+        //use a priority queue to determine which airport to start at...
+        //make sure to add origin
+
+
+        /*** TODO: complete djikstra's algorithm
+        // This is assuming the graph has already been sorted
+        while(it->first == originCode)
+        {
+            // Check for direct flight.
+            if(it->second.getAirportCode() == destinationCode)
+                return;
+            else
+            {
+                int shortestFlightTime = 0;
+                // Here Ideally we begin with the shortest connected flight
+                for(auto flightIt = it->second.flights.begin(); flightIt != it->second.flights.end(); flightIt++)
+                {
+                    // Search through available flights to find the shortest flight.
+                    if(flightIt == it->second.flights.begin())
+                        shortestFlightTime = flightIt->second.getAverageFlightTime();
+                    else
+                    {
+                        if(flightIt->second.getAverageFlightTime() < shortestFlightTime)
+                        {
+                            Flight shortest = flightIt->second;
+                            shortestFlightTime = flightIt->second.getAverageFlightTime();
+                        }
+                    }
+                }
+                // Possibly implement a new function to check if flight connects to destination
+            }
+            it++;
+        } ***/
+    }
+    //generate path using floyd warshall algorithm
+    void floydPath(DirectedGraph &graph, std::string &origin, std::string &destination) {
+        //TODO
+        if(floydMap.size() == 0) {//if the floydMap was never made, generate it first.
+            generateMap();
+        }
     }
 };
 
