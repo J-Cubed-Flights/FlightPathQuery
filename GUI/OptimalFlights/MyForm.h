@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include "../../src/directedgraph.h"
 
 namespace OptimalFlights {
 
@@ -11,17 +12,21 @@ namespace OptimalFlights {
 	using namespace System::Drawing;
 
 	/// <summary>
-	/// Summary for MyForm
+	/// This form is used to run the optimal flight path finder
 	/// </summary>
 	public ref class MyForm : public System::Windows::Forms::Form
 	{
+	private:
+		DirectedGraph* graph;		
 	public:
 		MyForm(void)
 		{
+			graph = new DirectedGraph();
+			parseData(*graph, "../../data/airports.csv", "../../data/transport_data_2015_january.csv");
+			if (graph->size() == 0) {
+				parseData(*graph, "data/airports.csv", "data/transport_data_2015_january.csv");
+			}
 			InitializeComponent();
-			//
-			//TODO: Add the constructor code here
-			//
 		}
 
 	protected:
@@ -33,6 +38,10 @@ namespace OptimalFlights {
 			if (components)
 			{
 				delete components;
+			}
+			if (graph != nullptr) {
+				delete graph;
+				graph = nullptr;
 			}
 		}
 	//TODO: Add DirectedGraph as a member variable here.
@@ -159,7 +168,7 @@ namespace OptimalFlights {
 			// 
 			this->DjikstraText->AutoSize = true;
 			this->DjikstraText->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 12));
-			this->DjikstraText->Location = System::Drawing::Point(544, 57);
+			this->DjikstraText->Location = System::Drawing::Point(655, 57);
 			this->DjikstraText->Name = L"DjikstraText";
 			this->DjikstraText->Size = System::Drawing::Size(76, 25);
 			this->DjikstraText->TabIndex = 6;
@@ -168,7 +177,7 @@ namespace OptimalFlights {
 			// dTime
 			// 
 			this->dTime->AutoSize = true;
-			this->dTime->Location = System::Drawing::Point(666, 64);
+			this->dTime->Location = System::Drawing::Point(777, 64);
 			this->dTime->Name = L"dTime";
 			this->dTime->Size = System::Drawing::Size(43, 16);
 			this->dTime->TabIndex = 9;
@@ -178,7 +187,7 @@ namespace OptimalFlights {
 			// 
 			this->floydText->AutoSize = true;
 			this->floydText->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 12));
-			this->floydText->Location = System::Drawing::Point(488, 92);
+			this->floydText->Location = System::Drawing::Point(599, 92);
 			this->floydText->Name = L"floydText";
 			this->floydText->Size = System::Drawing::Size(142, 25);
 			this->floydText->TabIndex = 10;
@@ -187,7 +196,7 @@ namespace OptimalFlights {
 			// fTime
 			// 
 			this->fTime->AutoSize = true;
-			this->fTime->Location = System::Drawing::Point(666, 99);
+			this->fTime->Location = System::Drawing::Point(777, 99);
 			this->fTime->Name = L"fTime";
 			this->fTime->Size = System::Drawing::Size(43, 16);
 			this->fTime->TabIndex = 11;
@@ -208,7 +217,7 @@ namespace OptimalFlights {
 			this->elapsedtimeText->AutoSize = true;
 			this->elapsedtimeText->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 13.8F, static_cast<System::Drawing::FontStyle>((System::Drawing::FontStyle::Bold | System::Drawing::FontStyle::Underline)),
 				System::Drawing::GraphicsUnit::Point, static_cast<System::Byte>(0)));
-			this->elapsedtimeText->Location = System::Drawing::Point(533, 9);
+			this->elapsedtimeText->Location = System::Drawing::Point(644, 9);
 			this->elapsedtimeText->Name = L"elapsedtimeText";
 			this->elapsedtimeText->Size = System::Drawing::Size(176, 29);
 			this->elapsedtimeText->TabIndex = 13;
@@ -231,14 +240,14 @@ namespace OptimalFlights {
 			this->airportList->ItemHeight = 16;
 			this->airportList->Location = System::Drawing::Point(573, 145);
 			this->airportList->Name = L"airportList";
-			this->airportList->Size = System::Drawing::Size(158, 292);
+			this->airportList->Size = System::Drawing::Size(317, 292);
 			this->airportList->TabIndex = 15;
 			// 
 			// airportTitle
 			// 
 			this->airportTitle->AutoSize = true;
 			this->airportTitle->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 10.8F));
-			this->airportTitle->Location = System::Drawing::Point(555, 120);
+			this->airportTitle->Location = System::Drawing::Point(569, 120);
 			this->airportTitle->Name = L"airportTitle";
 			this->airportTitle->Size = System::Drawing::Size(182, 22);
 			this->airportTitle->TabIndex = 16;
@@ -248,7 +257,7 @@ namespace OptimalFlights {
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(8, 16);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
-			this->ClientSize = System::Drawing::Size(743, 452);
+			this->ClientSize = System::Drawing::Size(902, 452);
 			this->Controls->Add(this->airportTitle);
 			this->Controls->Add(this->airportList);
 			this->Controls->Add(this->clearButton);
@@ -273,9 +282,18 @@ namespace OptimalFlights {
 		}
 #pragma endregion
 	private: System::Void formLoad(System::Object^ sender, System::EventArgs^ e) {
-		//TODO: Replace this code with function adding all the airport ID's to the list.
-		for (int i = 100; i < 179; i++) {
-			airportList->Items->Add(i);
+
+		//This code was for testing:
+			//for (int i = 100; i < 179; i++) {
+			//	airportList->Items->Add(i);
+			//}
+			//String^ folder = "../../data";
+			//cli::array<String^>^ dir = System::IO::Directory::GetFiles(folder);
+			//for (int i = 0; i < dir->Length; i++)
+			//	airportList->Items->Add(dir[i]);
+		vector<std::string> names = graph->getAirportNames();
+		for (std::string s : names) {
+			airportList->Items->Add(gcnew String(s.c_str()));
 		}
 	}
 	private: System::Void end_TextChanged(System::Object^ sender, System::EventArgs^ e) {

@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include <string>
 #include <vector>
+#include <fstream>
 
 using namespace std;
 
@@ -90,6 +91,7 @@ private:
         }
     }
 public:
+    DirectedGraph() : layoverTime(120), update(true) {}
     bool validCode(string &code) {
         return airports.find(code) != airports.end();
     }
@@ -263,7 +265,7 @@ void parseData(DirectedGraph& flights, string airportFile, string flightFile) {
             //the columns are as follows: (index),flight_date,origin,dest,cancelled,distance,actual_elapsed_time
             //we need indexes 2,3,4,6 -> origin,dest,cancelled, actual_elapsed_time
             try {//in case there is a parsing error, skip the line and continue.
-                if (row[4] == "0") {//if the flight was not canceled, add it.
+                if (row[4] == "0" && row.size() == 7) {//if the flight was not canceled, add it.
                     string &origin = row[2];
                     string &dest = row[3];
                     int time = stoi(row[6]);
