@@ -50,11 +50,16 @@ private:
     //the matrix below will be built the first time that the floydPath function.
     //this optimized the time needed to make the map after the first time it is called.
     unordered_map<string, unordered_map<string, int>> floydMap;
-
+    unordered_map<string, unordered_map<string, int>> next;
     //TODO:build floyd warshall map generator
     //generates the floyd warshall  map if it is the first time.
     void generateMap() {
-
+        //first, initialize: add all the existing direct paths to the matrix
+//        int V = size();
+//        for (auto fromIt : airports) {
+//            Airport& current = fromIt.second;
+//            for(auto toIt : )
+//        }
     }
 public:
     bool validCode(string &code) {
@@ -163,10 +168,15 @@ public:
         } ***/
     }
     //generate the 3 shortest paths using floyd warshall algorithm
-    vector<FlightPath> floydPath(DirectedGraph &graph, std::string &origin, std::string &destination) {
+    vector<FlightPath> floydPath(std::string &origin, std::string &destination) {
         //TODO
         if(floydMap.size() == 0) {//if the floydMap was never made, generate it first.
             generateMap();
+        }
+        //if the origin or destination don't exist as valid values, then return NULL
+
+        if(airports.find(origin) == airports.end() || airports.find(destination) == airports.end()) {
+            return NULL;
         }
     }
 };

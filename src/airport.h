@@ -17,11 +17,21 @@ class Airport {
 private:
     string name; // full name of airport, may not be needed later on
     string airportCode; // 3-letter IATA Code (i.e. JFK)
-public:
     unordered_map<string, Flight> flights; // string stores the Arrival Airport's IATA Code (i.e. JFK)
+public:
     //this is just for making a null airport (used to ensure the getAirport function doesn't cause an error
     Airport() : name(""), airportCode("") {}
     Airport(string &n, string &a) : name(n), airportCode(a) {}
+
+    unordered_map<string, Flight>::iterator begin() {
+        return flights.begin();
+    }
+    unordered_map<string, Flight>::iterator end() {
+        return flights.end();
+    }
+    unordered_map<string, Flight>::iterator find(string& code) {
+        return flights.find(code);
+    }
 
     string getAirportName() const {return name;}
     string getAirportCode() const {return airportCode;}
