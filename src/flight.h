@@ -25,10 +25,10 @@ public:
         totalMinutes = 0;
     }
     Flight(const Flight &copy) {
-        departureAirport = copy.getDeparture();
-        arrivalAirport = copy.getArrival();
-        flightCount = copy.getFlightCount();
-        totalMinutes = copy.getTotalMinutes();
+        departureAirport = copy.departureAirport;
+        arrivalAirport = copy.arrivalAirport;
+        flightCount = copy.flightCount;
+        totalMinutes = copy.totalMinutes;
     }
 
     string getDeparture() const {return departureAirport;}

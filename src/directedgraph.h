@@ -18,7 +18,7 @@ class DirectedGraph {
 private:
     unordered_map<string, Airport> airports; // string stores the Departure Airport's IATA Code (i.e. JFK)
     Airport nullAirport; //store a null airport, which is used in getAirport
-    const int layoverTime = 120;
+    const int layoverTime;
     bool update = true; //used to determine if we need to update the Floyd Warshall matrix next time we call it.
     void quickSort(vector<string> &arr, int l, int r) {
         //we will have the first index be the pivot.
@@ -54,7 +54,6 @@ private:
     //this optimized the time needed to make the map after the first time it is called.
     unordered_map<string, unordered_map<string, int>> floydMap;
     unordered_map<string, unordered_map<string, string>> nextMap;
-    //TODO: make sure the map is properly generated
     //generates the floyd warshall  map if it is the first time.
     void generateFloydMap() {
         //Initialize: add all the existing direct paths to the matrix
@@ -127,13 +126,6 @@ public:
     vector<string> getAirportNames() {
         vector<string> result;
         string data;
-
-        // Honestly think if we want it to be a sorted list we should just create sorted map
-        // Then we should just be able to do the following - Jan (7/7/2023)
-
-        //an unordered map is not sorted, but is faster than a sorted map for the standard operations. - Jason
-        //over all, it would be faster to keep it as unordered, and just sort after we get the strings.
-        //this is O(nlog(n)) time since each comparison will only be between the first 3 letters of each string.
         for(auto it = airports.begin(); it != airports.end(); it++)
         {
             data = it->first + " - " + it->second.getAirportName();
@@ -152,7 +144,7 @@ public:
         // The data then can be used to calculate flight time.
         FlightPath path = FlightPath();
         //make sure that both the origin and destination are valid
-        if(validCode(originCode) || validCode(destinationCode)) {
+        if(!validCode(originCode) || !validCode(destinationCode)) {
             return path;
         }
 
@@ -210,7 +202,7 @@ public:
         FlightPath path;
 
         //if the origin or destination don't exist as valid airports, then return NULL
-        if(validCode(origin) || validCode(destination)) {
+        if(!validCode(origin) || !validCode(destination)) {
             return path;
         }
 
@@ -225,7 +217,7 @@ public:
         }
         //set the shortest path time.
         path.addTime(floydMap[origin][destination]);
-        
+
         //start at the origin and create the path.
         string cur = origin;
         path.addToPath(&airports.find(cur)->second);

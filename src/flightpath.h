@@ -68,13 +68,16 @@ string FlightPath::toString(bool withLayover) {
     for(int i = 0 ; i <= n; i++) {
         sstr << stops[i]->getAirportCode();
         if(i < n) {
-            sstr << " <- ";
+            sstr << " -> ";
         }
+    }
+    if(stops.size() == 0) {
+        return "No flight path";
     }
     if(withLayover) {
         sstr << " (Average total time: " << getWithLayover() << " minutes)";
     } else {
-        sstr << " (Average total time: " << getWithLayover() << " minutes)";
+        sstr << " (Average total time: " << totalFlightTime << " minutes)";
     }
     return sstr.str();
 }

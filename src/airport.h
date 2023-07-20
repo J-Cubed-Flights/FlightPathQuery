@@ -6,9 +6,11 @@
 
 #include "flight.h"
 
+#include <vector>
 #include <string>
 #include <unordered_map>
 #include <utility>
+#include <sstream>
 
 using namespace std;
 
@@ -33,7 +35,14 @@ public:
     unordered_map<string, Flight>::iterator find(string& code) {
         return flights.find(code);
     }
-
+    //for testing purposes
+    string printFlights() {
+        stringstream ss;
+        for(auto it : flights) {
+            ss << it.second.getArrival() << " " << it.second.getAverageFlightTime() << "\n";
+        }
+        return ss.str();
+    }
     string getAirportName() const {return name;}
     string getAirportCode() const {return airportCode;}
     bool isNull() {return name.length() == 0;}
