@@ -22,6 +22,7 @@ public:
     //this is just for making a null airport (used to ensure the getAirport function doesn't cause an error
     Airport() : name(""), airportCode("") {}
     Airport(string &n, string &a) : name(n), airportCode(a) {}
+    Airport(const Airport& a) : name(a.name), airportCode(a.airportCode), flights(a.flights) {}
 
     unordered_map<string, Flight>::iterator begin() {
         return flights.begin();
@@ -48,6 +49,25 @@ public:
 
             flights.emplace(arriveCode, newFlight);
         }
+    }
+    //operators
+    bool operator == (const Airport& a) {
+        return airportCode == a.airportCode;
+    }
+    bool operator != (const Airport& a) {
+        return airportCode != a.airportCode;
+    }
+    bool operator <= (const Airport& a) {
+        return airportCode <= a.airportCode;
+    }
+    bool operator >= (const Airport& a) {
+        return airportCode >= a.airportCode;
+    }
+    bool operator < (const Airport& a) {
+        return airportCode < a.airportCode;
+    }
+    bool operator > (const Airport& a) {
+        return airportCode > a.airportCode;
     }
 };
 
