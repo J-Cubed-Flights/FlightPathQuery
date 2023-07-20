@@ -208,15 +208,31 @@ public:
     FlightPath floydPath(std::string &origin, std::string &destination) {
 
         FlightPath path;
+
+        //if the origin or destination don't exist as valid airports, then return NULL
+        if(validCode(origin) || validCode(destination)) {
+            return path;
+        }
+
         if(update) {//if the floydMap was never made, generate it first.
             update = false;
             generateFloydMap();
         }
-        //if the origin or destination don't exist as valid values, then return NULL
-        if(validCode(origin) || validCode(destination)) {
+
+        //return empty path if there is no path.
+        if(nextMap[origin].find(destination) == nextMap[origin].end()) {
             return path;
         }
-        //TODO: get the actual path
+        //set the shortest path time.
+        path.addTime(floydMap[origin][destination]);
+        
+        //start at the origin and create the path.
+        string cur = origin;
+        path.addToPath(&airports.find(cur)->second);
+        while(cur != destination) {
+            cur = nextMap[cur][destination];
+            path.addToPath(&airports.find(cur)->second);
+        }
         return path;
     }
 };
