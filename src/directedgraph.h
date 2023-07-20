@@ -115,11 +115,11 @@ public:
         return airports.size();
     }
     //generate the 3 shortest paths as a vector
-    vector<FlightPath> djikstraPath(DirectedGraph &airports, string &originCode, string &destinationCode)
+    FlightPath djikstraPath(DirectedGraph &airports, string &originCode, string &destinationCode)
     {
         // This is intended to create the flight path from start to finish.
         // The data then can be used to calculate flight time.
-        vector<FlightPath> paths;
+        FlightPath path = FlightPath();
         //make sure that both the origin and destination are valid
         if(airports.validCode(originCode) || airports.validCode(destinationCode)) {
             return paths;
@@ -132,40 +132,46 @@ public:
         unordered_set<string> visited;
         //we will start at
         visited.emplace(originCode);
+        path.addToPath(airports[originCode]);
 
-        //use a priority queue to determine which airport to start at...
-        //make sure to add origin
-
-
-        /*** TODO: complete djikstra's algorithm
-        // This is assuming the graph has already been sorted
-        while(it->first == originCode)
+        Airport current_airport = airports[originCode];
+        while(current_airport != airports[destinationCode])
         {
-            // Check for direct flight.
-            if(it->second.getAirportCode() == destinationCode)
-                return;
-            else
+            int shortest_flight = 0;
+            string next_flight;
+            if(current_airport.flights.find(destinationCode) == current_airport.flights.end())
             {
-                int shortestFlightTime = 0;
-                // Here Ideally we begin with the shortest connected flight
-                for(auto flightIt = it->second.flights.begin(); flightIt != it->second.flights.end(); flightIt++)
+                // Search all connected flights for shortest flight
+                for(auto flightIt = current_airport.flights.begin(); flightIt != current_airport.flights.end(); flightIt++)
                 {
-                    // Search through available flights to find the shortest flight.
-                    if(flightIt == it->second.flights.begin())
-                        shortestFlightTime = flightIt->second.getAverageFlightTime();
-                    else
+                    // Check if airport has been visited
+                    if(visited.find(flightIt->first) != visited.end())
                     {
-                        if(flightIt->second.getAverageFlightTime() < shortestFlightTime)
-                        {
-                            Flight shortest = flightIt->second;
-                            shortestFlightTime = flightIt->second.getAverageFlightTime();
+                        // First flight in flights will be our base value
+                        if (shortest_flight == 0) {
+                            shortest_flight = flightIt->second.getAverageFlightTime();
+                            next_flight = flightIt->first;
+                        }
+                        // Update shortest flight
+                        else if (flightIt->second.getAverageFlightTime() < shortest_flight) {
+                            shortest_flight = flightIt->second.getAverageFlightTime();
+                            next_flight = flightIt->first;
                         }
                     }
                 }
-                // Possibly implement a new function to check if flight connects to destination
+                // Update visited, current airport, and add stop to flight path
+                visited.emplace(next_flight);
+                current_airport = airports[next_flight];
+                path.addToPath(airports[next_flight]);
             }
-            it++;
-        } ***/
+            else if(current_airport.flights.find(destinationCode) != current_airport.flights.end())
+            {
+                current_airport = airports[destinationCode];
+                path.addToPath(airports[destinationCode]);
+            }
+
+        }
+        return path;
     }
     //generate the 3 shortest paths using floyd warshall algorithm
     vector<FlightPath> floydPath(std::string &origin, std::string &destination) {
