@@ -25,11 +25,15 @@ void mainDriver() {
 //        cout << s << endl;
 //    }
 
-//    For testing the path finding with Djikstra's algorithm:
-//    string from = "ABE";
-//    string to = "ATL";
+    //For testing the path finding with Djikstra's algorithm:
+//    start = std::chrono::system_clock::now();
+//    string from = "SLC";
+//    string to = "GNV";
 //    FlightPath result = flights.djikstraPath(from, to);
-//    cout << result.toString(true) << " " << result.getStops().size();
+//    end = std::chrono::system_clock::now();
+//    elapsed_seconds = end - start;
+//    cout << result.toString(true) << endl;
+//    cout << "completed in " << elapsed_seconds.count() << "s\n";
 
 //  For testing path finding with Floyd Warshall Algorithm:
 //  Note: The first time it is called, it takes ~97 seconds to run,

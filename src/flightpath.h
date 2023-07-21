@@ -47,6 +47,11 @@ void FlightPath::addToPath(Airport* stop)  {
 
 int FlightPath::getFlightTime()
 {
+    totalFlightTime = 0;
+    for(int i = 1; i < stops.size(); i++) {
+        string s = stops[i]->getAirportCode();
+        totalFlightTime += stops[i - 1]->find(s)->second.getAverageFlightTime();
+    }
     return totalFlightTime;
 }
 
@@ -56,7 +61,7 @@ int FlightPath::getWithLayover()
         return -1;
     }// Here we are calculating total time with layovers in mind.
     // Adding 2 hours aka 120 minutes per extra stop(excluding the origin and destination) to totalFlightTime.
-    int totalWithLayover = totalFlightTime;
+    int totalWithLayover = getFlightTime();
     if(stops.size() > 2) {
         totalWithLayover += 120 * (stops.size() - 2);
     }
@@ -66,6 +71,9 @@ string FlightPath::toString() {
     return toString(true);
 }
 string FlightPath::toString(bool withLayover) {
+    if(stops.size() == 0) {
+        return "No flight path";
+    }
     stringstream sstr;
     int n = stops.size() - 1;
     for(int i = 0 ; i <= n; i++) {
@@ -73,9 +81,6 @@ string FlightPath::toString(bool withLayover) {
         if(i < n) {
             sstr << " -> ";
         }
-    }
-    if(stops.size() == 0) {
-        return "No flight path";
     }
     if(withLayover) {
         sstr << " (Average total time: " << getWithLayover() << " minutes)";
