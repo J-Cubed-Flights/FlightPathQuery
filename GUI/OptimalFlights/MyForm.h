@@ -1,5 +1,10 @@
 #pragma once
 #include <string>
+#include <chrono>
+#include <thread> 
+#include <cliext/vector>
+#include <msclr\marshal_cppstd.h>
+
 #include "../../src/directedgraph.h"
 
 namespace OptimalFlights {
@@ -17,10 +22,23 @@ namespace OptimalFlights {
 	public ref class MyForm : public System::Windows::Forms::Form
 	{
 	private:
-		DirectedGraph* graph;		
+		DirectedGraph* graph;
+		cliext::vector<String ^>^ strs;
+		cliext::vector<String^>^ path_strs;
+
+		void cleanPaths() {
+			if (path_strs->size() != 0) {
+				for (int i = 0; i < path_strs->size(); i++) {
+					delete path_strs[i];
+				}
+				path_strs->clear();
+			}
+		}
 	public:
 		MyForm(void)
 		{
+			strs = gcnew cliext::vector<String^>();
+			path_strs = gcnew cliext::vector<String^>();
 			graph = new DirectedGraph();
 			parseData(*graph, "../../data/airports.csv", "../../data/transport_data_2015_january.csv");
 			if (graph->size() == 0) {
@@ -35,6 +53,16 @@ namespace OptimalFlights {
 		/// </summary>
 		~MyForm()
 		{
+			if (strs) {
+				for (int i = 0; i < strs->size(); i++) {
+					delete strs[i];
+				}
+				delete strs;
+			}
+			if (path_strs) {
+				cleanPaths();
+				delete path_strs;
+			}
 			if (components)
 			{
 				delete components;
@@ -73,6 +101,10 @@ namespace OptimalFlights {
 	private: System::Windows::Forms::ListBox^ airportList;
 
 	private: System::Windows::Forms::Label^ airportTitle;
+	private: System::Windows::Forms::Label^ invalidCodeLabel;
+	private: System::Windows::Forms::Timer^ timer1;
+	private: System::ComponentModel::IContainer^ components;
+
 
 
 	protected:
@@ -82,7 +114,7 @@ namespace OptimalFlights {
 		/// <summary>
 		/// Required designer variable.
 		/// </summary>
-		System::ComponentModel::Container ^components;
+
 
 #pragma region Windows Form Designer generated code
 		/// <summary>
@@ -91,6 +123,7 @@ namespace OptimalFlights {
 		/// </summary>
 		void InitializeComponent(void)
 		{
+			this->components = (gcnew System::ComponentModel::Container());
 			this->searchButton = (gcnew System::Windows::Forms::Button());
 			this->start = (gcnew System::Windows::Forms::TextBox());
 			this->end = (gcnew System::Windows::Forms::TextBox());
@@ -106,17 +139,20 @@ namespace OptimalFlights {
 			this->clearButton = (gcnew System::Windows::Forms::Button());
 			this->airportList = (gcnew System::Windows::Forms::ListBox());
 			this->airportTitle = (gcnew System::Windows::Forms::Label());
+			this->invalidCodeLabel = (gcnew System::Windows::Forms::Label());
+			this->timer1 = (gcnew System::Windows::Forms::Timer(this->components));
 			this->SuspendLayout();
 			// 
 			// searchButton
 			// 
+			this->searchButton->BackColor = System::Drawing::SystemColors::ControlLightLight;
 			this->searchButton->Cursor = System::Windows::Forms::Cursors::Hand;
 			this->searchButton->Location = System::Drawing::Point(385, 34);
 			this->searchButton->Name = L"searchButton";
 			this->searchButton->Size = System::Drawing::Size(97, 45);
 			this->searchButton->TabIndex = 0;
 			this->searchButton->Text = L"Search";
-			this->searchButton->UseVisualStyleBackColor = true;
+			this->searchButton->UseVisualStyleBackColor = false;
 			this->searchButton->Click += gcnew System::EventHandler(this, &MyForm::searchButton_Click);
 			// 
 			// start
@@ -249,15 +285,30 @@ namespace OptimalFlights {
 			this->airportTitle->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 10.8F));
 			this->airportTitle->Location = System::Drawing::Point(569, 120);
 			this->airportTitle->Name = L"airportTitle";
-			this->airportTitle->Size = System::Drawing::Size(182, 22);
+			this->airportTitle->Size = System::Drawing::Size(125, 22);
 			this->airportTitle->TabIndex = 16;
-			this->airportTitle->Text = L"Airport Abbreviations:";
+			this->airportTitle->Text = L"Airport Codes:";
+			// 
+			// invalidCodeLabel
+			// 
+			this->invalidCodeLabel->AutoSize = true;
+			this->invalidCodeLabel->ForeColor = System::Drawing::Color::Red;
+			this->invalidCodeLabel->Location = System::Drawing::Point(89, 85);
+			this->invalidCodeLabel->Name = L"invalidCodeLabel";
+			this->invalidCodeLabel->Size = System::Drawing::Size(195, 16);
+			this->invalidCodeLabel->TabIndex = 17;
+			this->invalidCodeLabel->Text = L"Please input valid airport codes";
+			this->invalidCodeLabel->Visible = false;
+			// 
+			// timer1
+			// 
 			// 
 			// MyForm
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(8, 16);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
 			this->ClientSize = System::Drawing::Size(902, 452);
+			this->Controls->Add(this->invalidCodeLabel);
 			this->Controls->Add(this->airportTitle);
 			this->Controls->Add(this->airportList);
 			this->Controls->Add(this->clearButton);
@@ -282,47 +333,113 @@ namespace OptimalFlights {
 		}
 #pragma endregion
 	private: System::Void formLoad(System::Object^ sender, System::EventArgs^ e) {
-
-		//This code was for testing:
-			//for (int i = 100; i < 179; i++) {
-			//	airportList->Items->Add(i);
-			//}
-			//String^ folder = "../../data";
-			//cli::array<String^>^ dir = System::IO::Directory::GetFiles(folder);
-			//for (int i = 0; i < dir->Length; i++)
-			//	airportList->Items->Add(dir[i]);
 		vector<std::string> names = graph->getAirportNames();
 		for (std::string s : names) {
-			airportList->Items->Add(gcnew String(s.c_str()));
+			String^ str = gcnew String(s.c_str());
+			strs->push_back(str);
+			airportList->Items->Add(str);
 		}
 	}
 	private: System::Void end_TextChanged(System::Object^ sender, System::EventArgs^ e) {
-		if (resultList->Items->Count == 1 && resultList->Items[0]->ToString()->Length == 40) {
-			resultList->Items->Clear();
-			resultList->Items->Add(L"Results appear here");
+		if (this->invalidCodeLabel->Visible) {
+			this->invalidCodeLabel->Visible = false;
 		}
 	}
 	private: System::Void start_TextChanged(System::Object^ sender, System::EventArgs^ e) {
-		if (resultList->Items->Count == 1 && resultList->Items[0]->ToString()->Length == 40) {
-			resultList->Items->Clear();
-			resultList->Items->Add(L"Results appear here");
+		if (this->invalidCodeLabel->Visible) {
+			this->invalidCodeLabel->Visible = false;
 		}
+	}
+	public: void computeDjikstra(System::Object ^state) {
+		//Convert to std strings
+		msclr::interop::marshal_context context;
+		std::string origin = context.marshal_as<std::string>(start->Text);
+		std::string dest = context.marshal_as<std::string>(end->Text);
+
+		std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
+		std::chrono::duration<double> elapsed_seconds;
+		startTime = std::chrono::system_clock::now();
+		//TODO insert function here when finished
+		FlightPath result;// = graph->djikstraPath(origin, dest);
+		endTime = std::chrono::system_clock::now();
+		elapsed_seconds = endTime - startTime;
+
+		//push results into the list
+		String^ path = gcnew String(result.toString().c_str());
+		path_strs->push_back(path);
+		//fix System.InvalidOperationException: 'Cross-thread operation not valid: Control 'resultList' accessed from a thread other than the thread it was created on
+		resultList->Items->Add(L"Djikstra's Algorithm Path:");
+		resultList->Items->Add(path);
+		
+		dTime->Text = elapsed_seconds.count().ToString() + L"s";
+	}
+	public: void computeFloydWarshall(System::Object^ state) {
+		//Convert to std strings
+		msclr::interop::marshal_context context;
+		std::string origin = context.marshal_as<std::string>(start->Text);
+		std::string dest = context.marshal_as<std::string>(end->Text);
+		
+
+		std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
+		std::chrono::duration<double> elapsed_seconds;
+		startTime = std::chrono::system_clock::now();
+		FlightPath result = graph->floydPath(origin, dest);
+		endTime = std::chrono::system_clock::now();
+		elapsed_seconds = endTime - startTime;
+
+		//push results into the list
+		String^ path = gcnew String(result.toString().c_str());
+		path_strs->push_back(path);
+
+		resultList->Items->Add(L"Floyd Warshall Algorithm Path:");
+		resultList->Items->Add(path);
+		fTime->Text = elapsed_seconds.count().ToString() + L"s";
 	}
 	private: System::Void searchButton_Click(System::Object^ sender, System::EventArgs^ e) {
 		resultList->Items->Clear();
+		cleanPaths();
 		if (start->Text->Length != 3 || end->Text->Length != 3) {
-			resultList->Items->Add(L"Please input valid airport abbreviations");
+			this->invalidCodeLabel->Visible = true;
 			return;
 		}
-		resultList->Items->Add(start->Text + L" " + end->Text);
-		//TODO: Add results here...
-		dTime->Text = L"0.000ms";
-		fTime->Text = L"0.000ms";
+		//Notify user that it is loading.
+		resultList->Items->Add(L"Calculating shortest path from " + start->Text + L" to " + end->Text + L", please wait");
+		this->searchButton->BackColor = System::Drawing::SystemColors::ControlDark;
+		/***
+		//Make Djikstra thread 
+		System::Threading::ParameterizedThreadStart^ dStarter = gcnew System::Threading::ParameterizedThreadStart(this, &MyForm::computeDjikstra);
+		System::Threading::Thread^ dThread = gcnew System::Threading::Thread(dStarter);
+
+		//Make a Floyd Warshall thread
+		System::Threading::ParameterizedThreadStart^ fwStarter = gcnew System::Threading::ParameterizedThreadStart(this, &MyForm::computeFloydWarshall);
+		System::Threading::Thread^ fwThread = gcnew System::Threading::Thread(fwStarter);
+
+		//Start the threads
+		dThread->Start(this);
+		fwThread->Start(this);
+		
+		//join threads
+		fwThread->Join();
+		dThread->Join();
+		delete fwStarter;
+		delete dStarter;
+		delete fwThread;
+		delete dThread;
+		/***/
+		Object^ temp = gcnew Object();
+		computeDjikstra(temp);
+		//computeFloydWarshall();
+		delete temp;
+
+		//remove the first row, and revert button color.
+		this->searchButton->BackColor = System::Drawing::SystemColors::ControlLightLight;
+		resultList->Items->RemoveAt(0);
 	}
 	private: System::Void clearButton_Click(System::Object^ sender, System::EventArgs^ e) {
 		dTime->Text = L"---------";
 		fTime->Text = L"---------";
 		resultList->Items->Clear();
+		cleanPaths();
 		resultList->Items->Add(L"Results appear here");
 		start->Clear();
 		end->Clear();

@@ -75,10 +75,12 @@ private:
             for (auto itDepart : airports) {
                 const string& depart = itDepart.first;
                 auto departEnd = floydMap[depart].end();
+                if(floydMap[depart].find(midpoint) == departEnd) {
+                    continue;
+                }
                 for (auto itArrive : airports) {
                     const string& arrive = itArrive.first;
-                    if(floydMap[depart].find(midpoint) == departEnd
-                        || floydMap[midpoint].find(arrive) == midEnd) {
+                    if(floydMap[midpoint].find(arrive) == midEnd) {
                         continue;
                     }
                     //if this path doesn't exist or the new path is faster than the previous path
