@@ -71,19 +71,22 @@ private:
         //modified Floyd Warshall Algorithm
         for (auto itMid : airports) {
             const string& midpoint = itMid.first;
+            auto midEnd = floydMap[midpoint].end();
             for (auto itDepart : airports) {
                 const string& depart = itDepart.first;
+                auto departEnd = floydMap[depart].end();
                 for (auto itArrive : airports) {
                     const string& arrive = itArrive.first;
-                    if(floydMap[depart].find(midpoint) == floydMap[depart].end()
-                        || floydMap[midpoint].find(arrive) == floydMap[midpoint].end()) {
+                    if(floydMap[depart].find(midpoint) == departEnd
+                        || floydMap[midpoint].find(arrive) == midEnd) {
                         continue;
                     }
                     //if this path doesn't exist or the new path is faster than the previous path
-                    if(floydMap[depart].find(arrive) == floydMap[depart].end()
+                    if(floydMap[depart].find(arrive) == departEnd
                         || floydMap[depart][arrive] > floydMap[depart][midpoint] + layoverTime + floydMap[midpoint][arrive]) {
                         floydMap[depart][arrive] = floydMap[depart][midpoint] + layoverTime + floydMap[midpoint][arrive];
                         nextMap[depart][arrive] = nextMap[depart][midpoint];
+
                     }
                 }
             }
@@ -206,7 +209,7 @@ public:
             return path;
         }
 
-        if(update) {//if the floydMap was never made, generate it first.
+        if(update) {//if the floydMap was never made or if there were any flights added, generate it first.
             update = false;
             generateFloydMap();
         }

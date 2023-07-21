@@ -20,14 +20,14 @@ class FlightPath
 {
 private:
     int totalFlightTime;
-    int totalWithLayover;
     vector<Airport*> stops;
 public:
-    FlightPath() : totalFlightTime(0), totalWithLayover(0) {};
-    FlightPath(FlightPath& copy) : stops(copy.getStops()), totalFlightTime(copy.getFlightTime()), totalWithLayover(copy.getWithLayover()){};
+    FlightPath() : totalFlightTime(0) {};
+    FlightPath(FlightPath& copy) : stops(copy.getStops()), totalFlightTime(copy.getFlightTime()) {};
     int getFlightTime();
     int getWithLayover();
     string toString(bool withLayover);
+    string toString();
     void addToPath(Airport* stop);
     void addTime(int t);
     vector<Airport*> getStops();
@@ -56,12 +56,15 @@ int FlightPath::getWithLayover()
         return -1;
     }// Here we are calculating total time with layovers in mind.
     // Adding 2 hours aka 120 minutes per extra stop(excluding the origin and destination) to totalFlightTime.
+    int totalWithLayover = totalFlightTime;
     if(stops.size() > 2) {
-        totalWithLayover = 120 * (stops.size() - 2) + totalFlightTime;
+        totalWithLayover += 120 * (stops.size() - 2);
     }
     return totalWithLayover;
 }
-
+string FlightPath::toString() {
+    return toString(true);
+}
 string FlightPath::toString(bool withLayover) {
     stringstream sstr;
     int n = stops.size() - 1;
