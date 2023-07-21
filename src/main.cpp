@@ -15,7 +15,7 @@ void mainDriver() {
     // Initialize an empty DirectedGraph object
     DirectedGraph flights;
     parseData(flights, "../data/airports.csv", "../data/transport_data_2015_january.csv");
-
+    //cout << "parsing complete" << endl;
     //useful timer
     chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> elapsed_seconds;
@@ -58,6 +58,8 @@ void mainDriver() {
 
 //    For testing to make sure the airports actually have flights in them.
 //    flights.getAirport(from).printFlights();
+
+    cout << "max threads is: " << thread::hardware_concurrency() << endl;
 }
 
 

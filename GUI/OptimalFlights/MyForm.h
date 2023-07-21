@@ -15,6 +15,7 @@ namespace OptimalFlights {
 	using namespace System::Windows::Forms;
 	using namespace System::Data;
 	using namespace System::Drawing;
+	using namespace System::Threading;
 
 	/// <summary>
 	/// This form is used to run the optimal flight path finder
@@ -25,6 +26,8 @@ namespace OptimalFlights {
 		DirectedGraph* graph;
 		cliext::vector<String ^>^ strs;
 		cliext::vector<String^>^ path_strs;
+		DateTime dStartTime;
+		DateTime fwStartTime;
 
 		void cleanPaths() {
 			if (path_strs->size() != 0) {
@@ -102,7 +105,9 @@ namespace OptimalFlights {
 
 	private: System::Windows::Forms::Label^ airportTitle;
 	private: System::Windows::Forms::Label^ invalidCodeLabel;
-	private: System::Windows::Forms::Timer^ timer1;
+	private: System::Windows::Forms::Timer^ timerDjikstra;
+	private: System::Windows::Forms::Timer^ timerFloyd;
+
 	private: System::ComponentModel::IContainer^ components;
 
 
@@ -140,7 +145,8 @@ namespace OptimalFlights {
 			this->airportList = (gcnew System::Windows::Forms::ListBox());
 			this->airportTitle = (gcnew System::Windows::Forms::Label());
 			this->invalidCodeLabel = (gcnew System::Windows::Forms::Label());
-			this->timer1 = (gcnew System::Windows::Forms::Timer(this->components));
+			this->timerDjikstra = (gcnew System::Windows::Forms::Timer(this->components));
+			this->timerFloyd = (gcnew System::Windows::Forms::Timer(this->components));
 			this->SuspendLayout();
 			// 
 			// searchButton
@@ -300,8 +306,13 @@ namespace OptimalFlights {
 			this->invalidCodeLabel->Text = L"Please input valid airport codes";
 			this->invalidCodeLabel->Visible = false;
 			// 
-			// timer1
+			// timerDjikstra
 			// 
+			this->timerDjikstra->Tick += gcnew System::EventHandler(this, &MyForm::timerDjikstra_Tick);
+			// 
+			// timerFloyd
+			// 
+			this->timerFloyd->Tick += gcnew System::EventHandler(this, &MyForm::timerFloyd_Tick);
 			// 
 			// MyForm
 			// 
@@ -332,6 +343,76 @@ namespace OptimalFlights {
 
 		}
 #pragma endregion
+	private: void dTimerStart() {
+		dStartTime = DateTime::Now;
+		timerDjikstra->Start();
+	}
+	private: void fwTimerStart() {
+		fwStartTime = DateTime::Now;
+		timerFloyd->Start();
+	}
+	public: void computeDjikstra(System::Object^ state) {
+		//Convert to std strings
+		msclr::interop::marshal_context context;
+		std::string origin = context.marshal_as<std::string>(start->Text);
+		std::string dest = context.marshal_as<std::string>(end->Text);
+
+		dTimerStart();
+		std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
+		std::chrono::duration<double> elapsed_seconds;
+		startTime = std::chrono::system_clock::now();
+		//TODO insert function here when finished
+		FlightPath result;// = graph->djikstraPath(origin, dest);
+		endTime = std::chrono::system_clock::now();
+		elapsed_seconds = endTime - startTime;
+
+		//push results into the list
+
+		String^ path = gcnew String(result.toString().c_str());
+		path_strs->push_back(path);
+		//fix System.InvalidOperationException: 'Cross-thread operation not valid: Control 'resultList' accessed from a thread other than the thread it was created on
+		resultList->Items->Add(L"Djikstra's Algorithm Path:");
+		resultList->Items->Add(path);
+
+		timerDjikstra->Stop();
+		dTime->Text = elapsed_seconds.count().ToString() + L"s";
+	}
+	public: void computeFloydWarshall(System::Object^ state) {
+		//Convert to std strings
+		msclr::interop::marshal_context context;
+		std::string origin = context.marshal_as<std::string>(start->Text);
+		std::string dest = context.marshal_as<std::string>(end->Text);
+
+
+		fwTimerStart();
+		std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
+		std::chrono::duration<double> elapsed_seconds;
+		startTime = std::chrono::system_clock::now();
+		FlightPath result = graph->floydPath(origin, dest);
+		endTime = std::chrono::system_clock::now();
+		elapsed_seconds = endTime - startTime;
+
+		//push results into the list
+
+		String^ path = gcnew String(result.toString().c_str());
+		path_strs->push_back(path);
+
+		resultList->Items->Add(L"Floyd Warshall Algorithm Path:");
+		resultList->Items->Add(path);
+
+		timerFloyd->Stop();
+		fTime->Text = elapsed_seconds.count().ToString() + L"s";
+	}
+	private: void computeFloydWarshall() {
+		Object^ temp = gcnew Object();
+		computeFloydWarshall(temp);
+		delete temp;
+	}
+	private: void computeDjikstra() {
+		Object^ temp = gcnew Object();
+		computeDjikstra(temp);
+		delete temp;
+	}
 	private: System::Void formLoad(System::Object^ sender, System::EventArgs^ e) {
 		vector<std::string> names = graph->getAirportNames();
 		for (std::string s : names) {
@@ -350,59 +431,16 @@ namespace OptimalFlights {
 			this->invalidCodeLabel->Visible = false;
 		}
 	}
-	public: void computeDjikstra(System::Object ^state) {
-		//Convert to std strings
-		msclr::interop::marshal_context context;
-		std::string origin = context.marshal_as<std::string>(start->Text);
-		std::string dest = context.marshal_as<std::string>(end->Text);
-
-		std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-		std::chrono::duration<double> elapsed_seconds;
-		startTime = std::chrono::system_clock::now();
-		//TODO insert function here when finished
-		FlightPath result;// = graph->djikstraPath(origin, dest);
-		endTime = std::chrono::system_clock::now();
-		elapsed_seconds = endTime - startTime;
-
-		//push results into the list
-		String^ path = gcnew String(result.toString().c_str());
-		path_strs->push_back(path);
-		//fix System.InvalidOperationException: 'Cross-thread operation not valid: Control 'resultList' accessed from a thread other than the thread it was created on
-		resultList->Items->Add(L"Djikstra's Algorithm Path:");
-		resultList->Items->Add(path);
-		
-		dTime->Text = elapsed_seconds.count().ToString() + L"s";
-	}
-	public: void computeFloydWarshall(System::Object^ state) {
-		//Convert to std strings
-		msclr::interop::marshal_context context;
-		std::string origin = context.marshal_as<std::string>(start->Text);
-		std::string dest = context.marshal_as<std::string>(end->Text);
-		
-
-		std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-		std::chrono::duration<double> elapsed_seconds;
-		startTime = std::chrono::system_clock::now();
-		FlightPath result = graph->floydPath(origin, dest);
-		endTime = std::chrono::system_clock::now();
-		elapsed_seconds = endTime - startTime;
-
-		//push results into the list
-		String^ path = gcnew String(result.toString().c_str());
-		path_strs->push_back(path);
-
-		resultList->Items->Add(L"Floyd Warshall Algorithm Path:");
-		resultList->Items->Add(path);
-		fTime->Text = elapsed_seconds.count().ToString() + L"s";
-	}
+	
 	private: System::Void searchButton_Click(System::Object^ sender, System::EventArgs^ e) {
-		resultList->Items->Clear();
-		cleanPaths();
+		
 		if (start->Text->Length != 3 || end->Text->Length != 3) {
 			this->invalidCodeLabel->Visible = true;
 			return;
 		}
 		//Notify user that it is loading.
+		resultList->Items->Clear();
+		cleanPaths();
 		resultList->Items->Add(L"Calculating shortest path from " + start->Text + L" to " + end->Text + L", please wait");
 		this->searchButton->BackColor = System::Drawing::SystemColors::ControlDark;
 		/***
@@ -426,16 +464,23 @@ namespace OptimalFlights {
 		delete fwThread;
 		delete dThread;
 		/***/
-		Object^ temp = gcnew Object();
-		computeDjikstra(temp);
-		//computeFloydWarshall();
-		delete temp;
+
+		//*** Single Thread
+		computeDjikstra();
+		computeFloydWarshall();
+		/***/
 
 		//remove the first row, and revert button color.
 		this->searchButton->BackColor = System::Drawing::SystemColors::ControlLightLight;
 		resultList->Items->RemoveAt(0);
 	}
 	private: System::Void clearButton_Click(System::Object^ sender, System::EventArgs^ e) {
+		if (timerDjikstra->Enabled) {
+			timerDjikstra->Stop();
+		}
+		if (timerFloyd->Enabled) {
+			timerFloyd->Stop();
+		}
 		dTime->Text = L"---------";
 		fTime->Text = L"---------";
 		resultList->Items->Clear();
@@ -444,5 +489,13 @@ namespace OptimalFlights {
 		start->Clear();
 		end->Clear();
 	}
+private: System::Void timerDjikstra_Tick(System::Object^ sender, System::EventArgs^ e) {
+	TimeSpan cur = DateTime::Now.Subtract(dStartTime);
+	dTime->Text = System::Convert::ToString(cur.TotalSeconds) + "s";
+}
+private: System::Void timerFloyd_Tick(System::Object^ sender, System::EventArgs^ e) {
+	TimeSpan cur = DateTime::Now.Subtract(fwStartTime);
+	fTime->Text = System::Convert::ToString(cur.TotalSeconds) + "s";
+}
 };
 }
