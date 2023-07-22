@@ -443,7 +443,7 @@ namespace OptimalFlights {
 		cleanPaths();
 		resultList->Items->Add(L"Calculating shortest path from " + start->Text + L" to " + end->Text + L", please wait");
 		this->searchButton->BackColor = System::Drawing::SystemColors::ControlDark;
-		/***
+		//***
 		//Make Djikstra thread 
 		System::Threading::ParameterizedThreadStart^ dStarter = gcnew System::Threading::ParameterizedThreadStart(this, &MyForm::computeDjikstra);
 		System::Threading::Thread^ dThread = gcnew System::Threading::Thread(dStarter);
@@ -465,7 +465,7 @@ namespace OptimalFlights {
 		delete dThread;
 		/***/
 
-		//*** Single Thread
+		/*** Single Thread
 		computeDjikstra();
 		computeFloydWarshall();
 		/***/

@@ -22,7 +22,20 @@ private:
     Airport nullAirport; //store a null airport, which is used in getAirport
     const int layoverTime;
     bool update = true; //used to determine if we need to update the Floyd Warshall matrix next time we call it.
-    mutex generalLock;
+
+    //the matrix below will be built the first time that the floydPath function.
+    //this optimized the time needed to make the map after the first time it is called.
+    unordered_map<string, unordered_map<string, int>> floydMap;
+    unordered_map<string, unordered_map<string, string>> nextMap;
+    //TODO: convert to matrices to optimize time.
+
+    //used for quick access to match ID with airport code;
+    unordered_map<string, int> idMap;
+    vector<string> airportCodes;
+
+    //Map to store a unique lock for each airport
+    unordered_map<string, mutex> mutexMap;
+
     void quickSort(vector<string> &arr, int l, int r) {
         //we will have the first index be the pivot.
         if(l >= r) {
@@ -53,11 +66,7 @@ private:
         quickSort(arr, pivotI, r - 1);
         quickSort(arr, r + 1, end);
     }
-    //the matrix below will be built the first time that the floydPath function.
-    //this optimized the time needed to make the map after the first time it is called.
-    unordered_map<string, unordered_map<string, int>> floydMap;
-    unordered_map<string, unordered_map<string, string>> nextMap;
-    unordered_map<string, mutex> mutexMap;
+
     //generates the floyd warshall  map if it is the first time.
     void generateFloydMap() {
         //Initialize: add all the existing direct paths to the matrix
@@ -82,7 +91,7 @@ private:
             for (auto itDepart : airports) {
                 const string& depart = itDepart.first;
                 auto &departM = floydMap[depart];
-                if(floydMap[depart].find(midpoint) == departM.end()) {
+                if(departM.find(midpoint) == departM.end()) {
                     continue;
                 }
                 for (auto itArrive : airports) {
@@ -100,32 +109,22 @@ private:
             }
         }
     }
-    void threadWorkerInsert(Airport* port) {
-        Airport& current = *port;
-        string name = current.getAirportCode();
-        for(auto toIt = current.begin(); toIt != current.end(); toIt++) {
-            Flight& flight = toIt->second;
-            floydMap[name][flight.getArrival()] = flight.getAverageFlightTime();
-            nextMap[name][flight.getArrival()] = flight.getArrival();
-        }
-    }
-    void threadWorkerCompute(const string* depart, const string* midpoint) {
-        auto &departM = floydMap[*depart];
-        if(departM.find(*midpoint) == departM.end()) {
+    void threadWorkerCompute(string depart, string midpoint) {
+        auto &departM = floydMap[depart];
+        if(departM.find(midpoint) == departM.end()) {
             return;
         }
-        auto &midM = floydMap[*midpoint];
-        mutex *curLock = &mutexMap[*depart];
+        auto &midM = floydMap[midpoint];
+        mutex *curLock = &mutexMap[depart];
         for (auto itArrive : airports) {
             const string& arrive = itArrive.first;
             if(midM.find(arrive) != midM.end()) {
                 std::lock_guard<std::mutex> lock(*curLock);
-                //std::lock_guard<std::mutex> lock(generalLock);
                 //if this path doesn't exist or the new path is faster than the previous path
                 if (departM.find(arrive) == departM.end()
-                    || departM[arrive] > departM[*midpoint] + layoverTime + midM[arrive]) {
-                    departM[arrive] = departM[*midpoint] + layoverTime + midM[arrive];
-                    nextMap[*depart][arrive] = nextMap[*depart][*midpoint];
+                    || departM[arrive] > departM[midpoint] + layoverTime + midM[arrive]) {
+                    departM[arrive] = departM[midpoint] + layoverTime + midM[arrive];
+                    nextMap[depart][arrive] = nextMap[depart][midpoint];
                 }
             }
         }
@@ -135,39 +134,26 @@ private:
         floydMap.clear();
         nextMap.clear();
         vector<thread> threads;
-        int max = thread::hardware_concurrency() < 10 ? thread::hardware_concurrency() : 10;
+        int max = thread::hardware_concurrency();
         int c = max;
-        cout << "begin threading\n";
         for (auto fromIt : airports) {
-            floydMap[fromIt.first][fromIt.first] = 0;
-            mutexMap[fromIt.first];
-            threads.push_back(thread(&DirectedGraph::threadWorkerInsert, this, &fromIt.second));
-            if(--c <= 0) {
-                for(thread &t : threads) {
-                    if(t.joinable()) {
-                        t.join();
-                    }
-                }
-                threads.clear();
-                c = max;
-                //TODO: fix and delete.
-                cout << "DONE";
+            Airport& current = fromIt.second;
+            string port = fromIt.first;
+            floydMap[port][port] = 0;
+            mutexMap[port];
+            auto &row = floydMap[port];
+            auto &rowN = nextMap[port];
+            for(auto toIt = current.begin(); toIt != current.end(); toIt++) {
+                Flight& flight = toIt->second;
+                row[flight.getArrival()] = flight.getAverageFlightTime();
+                rowN[flight.getArrival()] = flight.getArrival();
             }
         }
-        if(threads.size() != 0) {
-            for(thread &t : threads) {
-                t.join();
-            }
-            threads.clear();
-            c = max;
-        }
-
-        cout << "begin Floyd Warshall\n";
         //modified Floyd Warshall Algorithm
         for (auto itMid : airports) {
             const string *midpoint = &(itMid.first);
             for (auto itDepart : airports) {
-                threads.push_back(thread(&DirectedGraph::threadWorkerCompute, this, &(itDepart.first), midpoint));
+                threads.push_back(thread(&DirectedGraph::threadWorkerCompute, this, itDepart.first, *midpoint));
                 if(--c <= 0) {
                     for(thread& t : threads) {
                         t.join();
@@ -219,15 +205,28 @@ public:
         }
         update = true;
     }
-    vector<string> getAirportNames() {
+    vector<string> getAirportCodes() {
+        if(airportCodes.size() == airports.size()) {
+            return airportCodes;
+        }
         vector<string> result;
         string data;
         for(auto it = airports.begin(); it != airports.end(); it++)
         {
-            data = it->first + " - " + it->second.getAirportName();
+            data = it->first;
             result.push_back(data);
         }
-        quickSort(result, 0, result.size() - 1);
+        return result;
+    }
+    vector<string> getAirportNames() {
+        if(airportCodes.size() != airports.size()) {
+            getAirportCodes();
+        }
+        vector<string> result;
+        for(string code : airportCodes)
+        {
+            result.push_back(code + " - " + airports[code].getAirportName());
+        }
         return result;
     }
     int size() {
@@ -304,7 +303,7 @@ public:
 
         if(update) {//if the floydMap was never made or if there were any flights added, generate it first.
             update = false;
-            generateFloydMap();
+            generateFloydMapMT();
         }
 
         //return empty path if there is no path.
@@ -382,6 +381,7 @@ void parseData(DirectedGraph& flights, string airportFile, string flightFile) {
     else {
         return;
     }
+    flights.getAirportCodes();
 }
 
 #endif //J_CUBED_FLIGHTS_DIRECTEDGRAPH_H
