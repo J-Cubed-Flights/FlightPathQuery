@@ -19,11 +19,12 @@ void mainDriver() {
     //useful timer
     chrono::time_point<std::chrono::system_clock> start, end;
     std::chrono::duration<double> elapsed_seconds;
-//    for listing all the airports
+    //for listing all the airports
 //    vector<string> names = flights.getAirportNames();
 //    for(string s : names) {
 //        cout << s << endl;
 //    }
+//    cout << "size:" << names.size() << endl;
 
     //For testing the path finding with Djikstra's algorithm:
 //    start = std::chrono::system_clock::now();
@@ -59,7 +60,7 @@ void mainDriver() {
 //    For testing to make sure the airports actually have flights in them.
 //    flights.getAirport(from).printFlights();
 
-    cout << "max threads is: " << thread::hardware_concurrency() << endl;
+//    cout << "max threads is: " << thread::hardware_concurrency() << endl;
 }
 
 

@@ -25,31 +25,52 @@ namespace OptimalFlights {
 	private:
 		DirectedGraph* graph;
 		cliext::vector<String ^>^ strs;
-		cliext::vector<String^>^ path_strs;
+		String^ d_path;
+		String^ d_time;
+		String^ f_path;
+		String^ f_time;
 		DateTime dStartTime;
 		DateTime fwStartTime;
+	private: System::ComponentModel::BackgroundWorker^ bkgdWorkerFloyd;
+	private: System::ComponentModel::BackgroundWorker^ bkgdCodeLoader;
+	private: System::ComponentModel::BackgroundWorker^ bkgdWorkerDjik;
 
-		void cleanPaths() {
-			if (path_strs->size() != 0) {
-				for (int i = 0; i < path_strs->size(); i++) {
-					delete path_strs[i];
-				}
-				path_strs->clear();
-			}
-		}
+
 	public:
 		MyForm(void)
 		{
 			strs = gcnew cliext::vector<String^>();
-			path_strs = gcnew cliext::vector<String^>();
 			graph = new DirectedGraph();
+			d_path = nullptr;
+			f_path = nullptr;
+			d_time = nullptr;
+			f_time = nullptr;
 			parseData(*graph, "../../data/airports.csv", "../../data/transport_data_2015_january.csv");
 			if (graph->size() == 0) {
 				parseData(*graph, "data/airports.csv", "data/transport_data_2015_january.csv");
 			}
+			
 			InitializeComponent();
 		}
-
+	private:
+		void cleanPaths() {
+			if (d_path) {
+				delete d_path;
+				d_path = nullptr;
+			}
+			if (d_time) {
+				delete d_time;
+				d_time = nullptr;
+			}
+			if (f_path) {
+				delete f_path;
+				f_path = nullptr;
+			}
+			if (f_time) {
+				delete f_time;
+				f_time = nullptr;
+			}
+		}
 	protected:
 		/// <summary>
 		/// Clean up any resources being used.
@@ -62,10 +83,7 @@ namespace OptimalFlights {
 				}
 				delete strs;
 			}
-			if (path_strs) {
-				cleanPaths();
-				delete path_strs;
-			}
+			cleanPaths();
 			if (components)
 			{
 				delete components;
@@ -147,6 +165,9 @@ namespace OptimalFlights {
 			this->invalidCodeLabel = (gcnew System::Windows::Forms::Label());
 			this->timerDjikstra = (gcnew System::Windows::Forms::Timer(this->components));
 			this->timerFloyd = (gcnew System::Windows::Forms::Timer(this->components));
+			this->bkgdWorkerDjik = (gcnew System::ComponentModel::BackgroundWorker());
+			this->bkgdWorkerFloyd = (gcnew System::ComponentModel::BackgroundWorker());
+			this->bkgdCodeLoader = (gcnew System::ComponentModel::BackgroundWorker());
 			this->SuspendLayout();
 			// 
 			// searchButton
@@ -314,6 +335,21 @@ namespace OptimalFlights {
 			// 
 			this->timerFloyd->Tick += gcnew System::EventHandler(this, &MyForm::timerFloyd_Tick);
 			// 
+			// bkgdWorkerDjik
+			// 
+			this->bkgdWorkerDjik->DoWork += gcnew System::ComponentModel::DoWorkEventHandler(this, &MyForm::bkgdWorkerDjik_DoWork);
+			this->bkgdWorkerDjik->RunWorkerCompleted += gcnew System::ComponentModel::RunWorkerCompletedEventHandler(this, &MyForm::bkgdWorkerDjik_RunWorkerCompleted);
+			// 
+			// bkgdWorkerFloyd
+			// 
+			this->bkgdWorkerFloyd->DoWork += gcnew System::ComponentModel::DoWorkEventHandler(this, &MyForm::bkgdWorkerFloyd_DoWork);
+			this->bkgdWorkerFloyd->RunWorkerCompleted += gcnew System::ComponentModel::RunWorkerCompletedEventHandler(this, &MyForm::bkgdWorkerFloyd_RunWorkerCompleted);
+			// 
+			// bkgdCodeLoader
+			// 
+			this->bkgdCodeLoader->DoWork += gcnew System::ComponentModel::DoWorkEventHandler(this, &MyForm::bkgdCodeLoader_DoWork);
+			this->bkgdCodeLoader->RunWorkerCompleted += gcnew System::ComponentModel::RunWorkerCompletedEventHandler(this, &MyForm::bkgdCodeLoader_RunWorkerCompleted);
+			// 
 			// MyForm
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(8, 16);
@@ -351,75 +387,31 @@ namespace OptimalFlights {
 		fwStartTime = DateTime::Now;
 		timerFloyd->Start();
 	}
-	public: void computeDjikstra(System::Object^ state) {
-		//Convert to std strings
-		msclr::interop::marshal_context context;
-		std::string origin = context.marshal_as<std::string>(start->Text);
-		std::string dest = context.marshal_as<std::string>(end->Text);
-
-		dTimerStart();
-		std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-		std::chrono::duration<double> elapsed_seconds;
-		startTime = std::chrono::system_clock::now();
-		//TODO insert function here when finished
-		FlightPath result;// = graph->djikstraPath(origin, dest);
-		endTime = std::chrono::system_clock::now();
-		elapsed_seconds = endTime - startTime;
-
-		//push results into the list
-
-		String^ path = gcnew String(result.toString().c_str());
-		path_strs->push_back(path);
-		//fix System.InvalidOperationException: 'Cross-thread operation not valid: Control 'resultList' accessed from a thread other than the thread it was created on
+	private: void displayDjikstra() {
 		resultList->Items->Add(L"Djikstra's Algorithm Path:");
-		resultList->Items->Add(path);
-
-		timerDjikstra->Stop();
-		dTime->Text = elapsed_seconds.count().ToString() + L"s";
+		resultList->Items->Add(d_path);
 	}
-	public: void computeFloydWarshall(System::Object^ state) {
-		//Convert to std strings
-		msclr::interop::marshal_context context;
-		std::string origin = context.marshal_as<std::string>(start->Text);
-		std::string dest = context.marshal_as<std::string>(end->Text);
-
-
-		fwTimerStart();
-		std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-		std::chrono::duration<double> elapsed_seconds;
-		startTime = std::chrono::system_clock::now();
-		FlightPath result = graph->floydPath(origin, dest);
-		endTime = std::chrono::system_clock::now();
-		elapsed_seconds = endTime - startTime;
-
-		//push results into the list
-
-		String^ path = gcnew String(result.toString().c_str());
-		path_strs->push_back(path);
-
+	private: void displayFloyd() {
 		resultList->Items->Add(L"Floyd Warshall Algorithm Path:");
-		resultList->Items->Add(path);
-
-		timerFloyd->Stop();
-		fTime->Text = elapsed_seconds.count().ToString() + L"s";
+		resultList->Items->Add(f_path);
 	}
-	private: void computeFloydWarshall() {
-		Object^ temp = gcnew Object();
-		computeFloydWarshall(temp);
-		delete temp;
+	private: void displayDjikstraTime() {
+		dTime->Text = d_time;
 	}
-	private: void computeDjikstra() {
-		Object^ temp = gcnew Object();
-		computeDjikstra(temp);
-		delete temp;
+	private: void displayFloydTime() {
+		fTime->Text = f_time;
 	}
-	private: System::Void formLoad(System::Object^ sender, System::EventArgs^ e) {
+	private: void loadList() {
 		vector<std::string> names = graph->getAirportNames();
 		for (std::string s : names) {
 			String^ str = gcnew String(s.c_str());
 			strs->push_back(str);
 			airportList->Items->Add(str);
 		}
+	}
+	private: System::Void formLoad(System::Object^ sender, System::EventArgs^ e) {
+		airportList->Items->Add("loading...");
+		bkgdCodeLoader->RunWorkerAsync();
 	}
 	private: System::Void end_TextChanged(System::Object^ sender, System::EventArgs^ e) {
 		if (this->invalidCodeLabel->Visible) {
@@ -431,9 +423,9 @@ namespace OptimalFlights {
 			this->invalidCodeLabel->Visible = false;
 		}
 	}
-	
+
 	private: System::Void searchButton_Click(System::Object^ sender, System::EventArgs^ e) {
-		
+
 		if (start->Text->Length != 3 || end->Text->Length != 3) {
 			this->invalidCodeLabel->Visible = true;
 			return;
@@ -443,26 +435,11 @@ namespace OptimalFlights {
 		cleanPaths();
 		resultList->Items->Add(L"Calculating shortest path from " + start->Text + L" to " + end->Text + L", please wait");
 		this->searchButton->BackColor = System::Drawing::SystemColors::ControlDark;
+		this->clearButton->BackColor = System::Drawing::SystemColors::ControlDark;
 		//***
-		//Make Djikstra thread 
-		System::Threading::ParameterizedThreadStart^ dStarter = gcnew System::Threading::ParameterizedThreadStart(this, &MyForm::computeDjikstra);
-		System::Threading::Thread^ dThread = gcnew System::Threading::Thread(dStarter);
-
-		//Make a Floyd Warshall thread
-		System::Threading::ParameterizedThreadStart^ fwStarter = gcnew System::Threading::ParameterizedThreadStart(this, &MyForm::computeFloydWarshall);
-		System::Threading::Thread^ fwThread = gcnew System::Threading::Thread(fwStarter);
-
-		//Start the threads
-		dThread->Start(this);
-		fwThread->Start(this);
-		
-		//join threads
-		fwThread->Join();
-		dThread->Join();
-		delete fwStarter;
-		delete dStarter;
-		delete fwThread;
-		delete dThread;
+		//Start the BackgroundWorkers
+		bkgdWorkerDjik->RunWorkerAsync();
+		bkgdWorkerFloyd->RunWorkerAsync();
 		/***/
 
 		/*** Single Thread
@@ -471,16 +448,12 @@ namespace OptimalFlights {
 		/***/
 
 		//remove the first row, and revert button color.
-		this->searchButton->BackColor = System::Drawing::SystemColors::ControlLightLight;
-		resultList->Items->RemoveAt(0);
 	}
 	private: System::Void clearButton_Click(System::Object^ sender, System::EventArgs^ e) {
-		if (timerDjikstra->Enabled) {
-			timerDjikstra->Stop();
+		if (timerDjikstra->Enabled || timerFloyd->Enabled) {
+			return;
 		}
-		if (timerFloyd->Enabled) {
-			timerFloyd->Stop();
-		}
+		bkgdWorkerDjik->CancelAsync();
 		dTime->Text = L"---------";
 		fTime->Text = L"---------";
 		resultList->Items->Clear();
@@ -496,6 +469,96 @@ private: System::Void timerDjikstra_Tick(System::Object^ sender, System::EventAr
 private: System::Void timerFloyd_Tick(System::Object^ sender, System::EventArgs^ e) {
 	TimeSpan cur = DateTime::Now.Subtract(fwStartTime);
 	fTime->Text = System::Convert::ToString(cur.TotalSeconds) + "s";
+}
+private: System::Void bkgdWorkerFloyd_DoWork(System::Object^ sender, System::ComponentModel::DoWorkEventArgs^ e) {
+	//Convert to std strings
+	msclr::interop::marshal_context context;
+	std::string origin = context.marshal_as<std::string>(start->Text);
+	std::string dest = context.marshal_as<std::string>(end->Text);
+
+	fwTimerStart();
+	std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
+	std::chrono::duration<double> elapsed_seconds;
+	startTime = std::chrono::system_clock::now();
+	FlightPath result = graph->floydPath(origin, dest);
+	endTime = std::chrono::system_clock::now();
+	elapsed_seconds = endTime - startTime;
+
+	timerFloyd->Stop();
+	f_time = elapsed_seconds.count().ToString() + L"s";
+	if (fTime->InvokeRequired) {
+		fTime->Invoke(gcnew Action(this, &MyForm::displayFloydTime));
+	}
+	else {
+		displayFloydTime();
+	}
+
+	//Add results to list
+	f_path = gcnew String(result.toString().c_str());
+
+	if (resultList->InvokeRequired) {
+		resultList->Invoke(gcnew Action(this, &MyForm::displayFloyd));
+	}
+	else {
+		displayFloyd();
+	}
+	
+}
+private: System::Void bkgdWorkerDjik_DoWork(System::Object^ sender, System::ComponentModel::DoWorkEventArgs^ e) {
+
+	//Convert to std strings
+	msclr::interop::marshal_context context;
+	std::string origin = context.marshal_as<std::string>(start->Text);
+	std::string dest = context.marshal_as<std::string>(end->Text);
+
+	dTimerStart();
+	std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
+	std::chrono::duration<double> elapsed_seconds;
+	startTime = std::chrono::system_clock::now();
+	//TODO insert function here when finished
+	FlightPath result;// = graph->djikstraPath(origin, dest);
+	endTime = std::chrono::system_clock::now();
+	elapsed_seconds = endTime - startTime;
+	timerDjikstra->Stop();
+	d_time = elapsed_seconds.count().ToString() + L"s";
+	if (dTime->InvokeRequired) {
+		dTime->Invoke(gcnew Action(this, &MyForm::displayDjikstraTime));
+	}
+	else {
+		displayDjikstraTime();
+	}
+	//push results into the list
+
+	d_path = gcnew String(result.toString().c_str());
+	
+	if (resultList->InvokeRequired) {
+		resultList->Invoke(gcnew Action(this, &MyForm::displayDjikstra));
+	}
+	else {
+		displayDjikstra();
+	}
+
+}
+private: System::Void bkgdWorkerFloyd_RunWorkerCompleted(System::Object^ sender, System::ComponentModel::RunWorkerCompletedEventArgs^ e) {
+	if (!timerDjikstra->Enabled && !timerFloyd->Enabled) {
+		this->searchButton->BackColor = System::Drawing::SystemColors::ControlLightLight;
+		this->clearButton->BackColor = System::Drawing::SystemColors::ControlLightLight;
+		resultList->Items->RemoveAt(0);
+	}
+}
+private: System::Void bkgdWorkerDjik_RunWorkerCompleted(System::Object^ sender, System::ComponentModel::RunWorkerCompletedEventArgs^ e) {
+	if (!timerDjikstra->Enabled && !timerFloyd->Enabled) {
+		this->searchButton->BackColor = System::Drawing::SystemColors::ControlLightLight;
+		this->clearButton->BackColor = System::Drawing::SystemColors::ControlLightLight;
+		resultList->Items->RemoveAt(0);
+	}
+}
+private: System::Void bkgdCodeLoader_DoWork(System::Object^ sender, System::ComponentModel::DoWorkEventArgs^ e) {
+	airportList->Invoke(gcnew Action(this, &MyForm::loadList));
+}
+
+private: System::Void bkgdCodeLoader_RunWorkerCompleted(System::Object^ sender, System::ComponentModel::RunWorkerCompletedEventArgs^ e) {
+	airportList->Items->RemoveAt(0);
 }
 };
 }

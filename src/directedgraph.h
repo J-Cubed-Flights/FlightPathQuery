@@ -209,14 +209,14 @@ public:
         if(airportCodes.size() == airports.size()) {
             return airportCodes;
         }
-        vector<string> result;
         string data;
-        for(auto it = airports.begin(); it != airports.end(); it++)
+        for(auto it : airports)
         {
-            data = it->first;
-            result.push_back(data);
+            data = it.first;
+            airportCodes.push_back(data);
         }
-        return result;
+        quickSort(airportCodes, 0, airportCodes.size() - 1);
+        return airportCodes;
     }
     vector<string> getAirportNames() {
         if(airportCodes.size() != airports.size()) {
@@ -302,8 +302,8 @@ public:
         }
 
         if(update) {//if the floydMap was never made or if there were any flights added, generate it first.
-            update = false;
             generateFloydMapMT();
+            update = false;
         }
 
         //return empty path if there is no path.
