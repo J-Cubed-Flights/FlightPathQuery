@@ -216,6 +216,7 @@ public:
             airportCodes.push_back(data);
         }
         quickSort(airportCodes, 0, airportCodes.size() - 1);
+        //Todo: assign id's
         return airportCodes;
     }
     vector<string> getAirportNames() {
@@ -303,6 +304,7 @@ public:
 
         if(update) {//if the floydMap was never made or if there were any flights added, generate it first.
             generateFloydMapMT();
+            //generateFloydMap();
             update = false;
         }
 

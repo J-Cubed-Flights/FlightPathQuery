@@ -31,6 +31,7 @@ namespace OptimalFlights {
 		String^ f_time;
 		DateTime dStartTime;
 		DateTime fwStartTime;
+		ReaderWriterLock^ rwl;
 	private: System::ComponentModel::BackgroundWorker^ bkgdWorkerFloyd;
 	private: System::ComponentModel::BackgroundWorker^ bkgdCodeLoader;
 	private: System::ComponentModel::BackgroundWorker^ bkgdWorkerDjik;
@@ -41,15 +42,11 @@ namespace OptimalFlights {
 		{
 			strs = gcnew cliext::vector<String^>();
 			graph = new DirectedGraph();
+			rwl = gcnew ReaderWriterLock();
 			d_path = nullptr;
 			f_path = nullptr;
 			d_time = nullptr;
-			f_time = nullptr;
-			parseData(*graph, "../../data/airports.csv", "../../data/transport_data_2015_january.csv");
-			if (graph->size() == 0) {
-				parseData(*graph, "data/airports.csv", "data/transport_data_2015_january.csv");
-			}
-			
+			f_time = nullptr;			
 			InitializeComponent();
 		}
 	private:
@@ -69,6 +66,9 @@ namespace OptimalFlights {
 			if (f_time) {
 				delete f_time;
 				f_time = nullptr;
+			}
+			if (rwl) {
+				delete rwl;
 			}
 		}
 	protected:
@@ -388,12 +388,18 @@ namespace OptimalFlights {
 		timerFloyd->Start();
 	}
 	private: void displayDjikstra() {
+		rwl->AcquireWriterLock(1);
 		resultList->Items->Add(L"Djikstra's Algorithm Path:");
 		resultList->Items->Add(d_path);
+		resultList->Items->Add("");
+		rwl->ReleaseWriterLock();
 	}
 	private: void displayFloyd() {
+		rwl->AcquireWriterLock(1);
 		resultList->Items->Add(L"Floyd Warshall Algorithm Path:");
 		resultList->Items->Add(f_path);
+		resultList->Items->Add("");
+		rwl->ReleaseWriterLock();
 	}
 	private: void displayDjikstraTime() {
 		dTime->Text = d_time;
@@ -438,6 +444,8 @@ namespace OptimalFlights {
 		this->clearButton->BackColor = System::Drawing::SystemColors::ControlDark;
 		//***
 		//Start the BackgroundWorkers
+		dTimerStart();
+		fwTimerStart();
 		bkgdWorkerDjik->RunWorkerAsync();
 		bkgdWorkerFloyd->RunWorkerAsync();
 		/***/
@@ -453,7 +461,6 @@ namespace OptimalFlights {
 		if (timerDjikstra->Enabled || timerFloyd->Enabled) {
 			return;
 		}
-		bkgdWorkerDjik->CancelAsync();
 		dTime->Text = L"---------";
 		fTime->Text = L"---------";
 		resultList->Items->Clear();
@@ -464,11 +471,19 @@ namespace OptimalFlights {
 	}
 private: System::Void timerDjikstra_Tick(System::Object^ sender, System::EventArgs^ e) {
 	TimeSpan cur = DateTime::Now.Subtract(dStartTime);
-	dTime->Text = System::Convert::ToString(cur.TotalSeconds) + "s";
+	if (cur.TotalSeconds > 60) {
+		dTime->Text = System::Convert::ToString(Math::Floor(cur.TotalMinutes)) + "m " + System::Convert::ToString(Math::Round(cur.TotalSeconds - Math::Floor(cur.TotalMinutes) * 60, 0)) + "s";
+	} else {
+		dTime->Text = System::Convert::ToString(Math::Round(cur.TotalSeconds, 2)) + "s";
+	}
 }
 private: System::Void timerFloyd_Tick(System::Object^ sender, System::EventArgs^ e) {
 	TimeSpan cur = DateTime::Now.Subtract(fwStartTime);
-	fTime->Text = System::Convert::ToString(cur.TotalSeconds) + "s";
+	if (cur.TotalSeconds > 60) {
+		fTime->Text = System::Convert::ToString(Math::Floor(cur.TotalMinutes)) + "m " + System::Convert::ToString(Math::Round(cur.TotalSeconds - Math::Floor(cur.TotalMinutes) * 60, 0)) + "s";
+	} else {
+		fTime->Text = System::Convert::ToString(Math::Round(cur.TotalSeconds, 2)) + "s";
+	}
 }
 private: System::Void bkgdWorkerFloyd_DoWork(System::Object^ sender, System::ComponentModel::DoWorkEventArgs^ e) {
 	//Convert to std strings
@@ -476,7 +491,6 @@ private: System::Void bkgdWorkerFloyd_DoWork(System::Object^ sender, System::Com
 	std::string origin = context.marshal_as<std::string>(start->Text);
 	std::string dest = context.marshal_as<std::string>(end->Text);
 
-	fwTimerStart();
 	std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
 	std::chrono::duration<double> elapsed_seconds;
 	startTime = std::chrono::system_clock::now();
@@ -511,7 +525,6 @@ private: System::Void bkgdWorkerDjik_DoWork(System::Object^ sender, System::Comp
 	std::string origin = context.marshal_as<std::string>(start->Text);
 	std::string dest = context.marshal_as<std::string>(end->Text);
 
-	dTimerStart();
 	std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
 	std::chrono::duration<double> elapsed_seconds;
 	startTime = std::chrono::system_clock::now();
@@ -540,20 +553,28 @@ private: System::Void bkgdWorkerDjik_DoWork(System::Object^ sender, System::Comp
 
 }
 private: System::Void bkgdWorkerFloyd_RunWorkerCompleted(System::Object^ sender, System::ComponentModel::RunWorkerCompletedEventArgs^ e) {
-	if (!timerDjikstra->Enabled && !timerFloyd->Enabled) {
+	rwl->AcquireReaderLock(1);
+	if (resultList->Items->Count >= 7) {
 		this->searchButton->BackColor = System::Drawing::SystemColors::ControlLightLight;
 		this->clearButton->BackColor = System::Drawing::SystemColors::ControlLightLight;
 		resultList->Items->RemoveAt(0);
 	}
+	rwl->ReleaseReaderLock();
 }
 private: System::Void bkgdWorkerDjik_RunWorkerCompleted(System::Object^ sender, System::ComponentModel::RunWorkerCompletedEventArgs^ e) {
-	if (!timerDjikstra->Enabled && !timerFloyd->Enabled) {
+	rwl->AcquireReaderLock(1);
+	if (resultList->Items->Count >= 7) {
 		this->searchButton->BackColor = System::Drawing::SystemColors::ControlLightLight;
 		this->clearButton->BackColor = System::Drawing::SystemColors::ControlLightLight;
 		resultList->Items->RemoveAt(0);
 	}
+	rwl->ReleaseReaderLock();
 }
 private: System::Void bkgdCodeLoader_DoWork(System::Object^ sender, System::ComponentModel::DoWorkEventArgs^ e) {
+	parseData(*graph, "../../data/airports.csv", "../../data/transport_data_2015_january.csv");
+	if (graph->size() == 0) {
+		parseData(*graph, "data/airports.csv", "data/transport_data_2015_january.csv");
+	}
 	airportList->Invoke(gcnew Action(this, &MyForm::loadList));
 }
 
