@@ -24,6 +24,10 @@ private:
 public:
     FlightPath() : totalFlightTime(0) {};
     FlightPath(FlightPath& copy) : stops(copy.getStops()), totalFlightTime(copy.getFlightTime()) {};
+    FlightPath& operator=(const FlightPath& other) {
+        return *this;
+    }
+
     int getFlightTime();
     int getWithLayover();
     string toString(bool withLayover);
