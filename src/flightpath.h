@@ -25,6 +25,8 @@ public:
     FlightPath() : totalFlightTime(0) {};
     FlightPath(FlightPath& copy) : stops(copy.getStops()), totalFlightTime(copy.getFlightTime()) {};
     FlightPath& operator=(const FlightPath& other) {
+        totalFlightTime = other.totalFlightTime;
+        stops = other.stops;
         return *this;
     }
 
