@@ -32,8 +32,6 @@ private:
     unordered_map<string, int> idMap;
     vector<string> airportCodes;
 
-    //Map to store a unique lock for each airport
-    vector<mutex> mutexVector;
 
     void quickSort(vector<string> &arr, int l, int r) {
         //we will have the first index be the pivot.
@@ -98,67 +96,6 @@ private:
                     }
                 }
             }
-        }
-    }
-    void threadWorkerInitRow(int i) {
-        Airport& current = airports.at(airportCodes[i]);
-        for(auto it : current) {
-            Flight& flight = it.second;
-            int j = idMap[flight.getArrival()];
-            floydMatrix[i][j] = flight.getAverageFlightTime();
-            nextMatrix[i][j] = j;
-        }
-    }
-    void threadWorkerCompute(int i, int mid, int n) {
-        mutex *curLock = &mutexVector[i];
-        for(int j = 0; j < n; j++) {
-            if (floydMatrix[mid][j] == INF) {
-                continue;
-            }
-            std::lock_guard<std::mutex> lock(*curLock);
-            if (floydMatrix[i][j] > floydMatrix[i][mid] + layoverTime + floydMatrix[mid][j]) {
-                floydMatrix[i][j] = floydMatrix[i][mid] + layoverTime + floydMatrix[mid][j];
-                nextMatrix[i][j] = nextMatrix[i][mid];
-            }
-        }
-    }
-    void generateFloydMapMT() {
-        //Initialize: add all the existing direct paths to the matrix
-        int max = thread::hardware_concurrency();
-        vector<thread> threads(max);
-        int c = 0;
-
-        int n = airportCodes.size();
-        floydMatrix = vector<vector<int>>(n, vector<int>(n, INF));
-        nextMatrix = vector<vector<int>>(n, vector<int>(n, -1));
-        mutexVector = vector<mutex>(n);
-
-        for(int i = 0; i < n; i++) {
-            floydMatrix[i][i] = 0;
-            threads[c++] = thread(&DirectedGraph::threadWorkerInitRow, this, i);
-            c %= max;
-            if(threads[c].joinable())
-                threads[c].join();
-        }
-        for(c = 0; c < max; c++) {
-            if(threads[c].joinable())
-            threads[c].join();
-        }
-        c = 0;
-        //modified Floyd Warshall Algorithm
-        for(int mid = 0; mid < n; mid++) {
-            for(int i = 0; i < n; i++) {
-                if(floydMatrix[i][mid] != INF) {
-                    threads[c++] = thread(&DirectedGraph::threadWorkerCompute, this, i, mid, n);
-                    c %= max;
-                    if(threads[c].joinable())
-                        threads[c].join();
-                }
-            }
-        }
-        for(c = 0; c < max; c++) {
-            if(threads[c].joinable())
-                threads[c].join();
         }
     }
 public:

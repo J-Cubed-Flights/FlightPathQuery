@@ -48,9 +48,7 @@ void mainDriver() {
 //    }
 //    cout << "size:" << names.size() << endl;
 
-    test("SLC","GNV", flights);
-
-//    cout << "max threads is: " << thread::hardware_concurrency() << endl;
+    test("ABE","GNV", flights);
 }
 
 
