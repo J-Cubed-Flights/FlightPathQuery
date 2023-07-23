@@ -33,7 +33,7 @@ private:
     vector<string> airportCodes;
 
     //Map to store a unique lock for each airport
-    unordered_map<string, mutex> mutexMap;
+    vector<mutex> mutexVector;
 
     void quickSort(vector<string> &arr, int l, int r) {
         //we will have the first index be the pivot.
@@ -86,78 +86,79 @@ private:
         //modified Floyd Warshall Algorithm
         for(int mid = 0; mid < n; mid++) {
             for(int i = 0; i < n; i++) {
-                for(int j = 0; j < n; j++) {
-                    if (floydMatrix[i][mid] == INF || floydMatrix[mid][j] == INF) {
-                        continue;
-                    }
-                    if (floydMatrix[i][j] > floydMatrix[i][mid] + layoverTime + floydMatrix[mid][j]) {
-                        floydMatrix[i][j] = floydMatrix[i][mid] + layoverTime + floydMatrix[mid][j];
-                        nextMatrix[i][j] = nextMatrix[i][mid];
+                if(floydMatrix[i][mid] != INF) {
+                    for (int j = 0; j < n; j++) {
+                        if (floydMatrix[mid][j] == INF) {
+                            continue;
+                        }
+                        if (floydMatrix[i][j] > floydMatrix[i][mid] + layoverTime + floydMatrix[mid][j]) {
+                            floydMatrix[i][j] = floydMatrix[i][mid] + layoverTime + floydMatrix[mid][j];
+                            nextMatrix[i][j] = nextMatrix[i][mid];
+                        }
                     }
                 }
             }
         }
     }
-    void threadWorkerCompute(string depart, string midpoint) {
-        auto &departM = floydMap[depart];
-        if(departM.find(midpoint) == departM.end()) {
-            return;
+    void threadWorkerInitRow(int i) {
+        Airport& current = airports.at(airportCodes[i]);
+        for(auto it : current) {
+            Flight& flight = it.second;
+            int j = idMap[flight.getArrival()];
+            floydMatrix[i][j] = flight.getAverageFlightTime();
+            nextMatrix[i][j] = j;
         }
-        auto &midM = floydMap[midpoint];
-        mutex *curLock = &mutexMap[depart];
-        for (auto itArrive : airports) {
-            const string& arrive = itArrive.first;
-            if(midM.find(arrive) != midM.end()) {
-                std::lock_guard<std::mutex> lock(*curLock);
-                //if this path doesn't exist or the new path is faster than the previous path
-                if (departM.find(arrive) == departM.end()
-                    || departM[arrive] > departM[midpoint] + layoverTime + midM[arrive]) {
-                    departM[arrive] = departM[midpoint] + layoverTime + midM[arrive];
-                    nextMap[depart][arrive] = nextMap[depart][midpoint];
-                }
+    }
+    void threadWorkerCompute(int i, int mid, int n) {
+        mutex *curLock = &mutexVector[i];
+        for(int j = 0; j < n; j++) {
+            if (floydMatrix[mid][j] == INF) {
+                continue;
+            }
+            std::lock_guard<std::mutex> lock(*curLock);
+            if (floydMatrix[i][j] > floydMatrix[i][mid] + layoverTime + floydMatrix[mid][j]) {
+                floydMatrix[i][j] = floydMatrix[i][mid] + layoverTime + floydMatrix[mid][j];
+                nextMatrix[i][j] = nextMatrix[i][mid];
             }
         }
     }
     void generateFloydMapMT() {
         //Initialize: add all the existing direct paths to the matrix
-        floydMap.clear();
-        nextMap.clear();
-        vector<thread> threads;
         int max = thread::hardware_concurrency();
-        int c = max;
-        for (auto fromIt : airports) {
-            Airport& current = fromIt.second;
-            string port = fromIt.first;
-            floydMap[port][port] = 0;
-            mutexMap[port];
-            auto &row = floydMap[port];
-            auto &rowN = nextMap[port];
-            for(auto toIt = current.begin(); toIt != current.end(); toIt++) {
-                Flight& flight = toIt->second;
-                row[flight.getArrival()] = flight.getAverageFlightTime();
-                rowN[flight.getArrival()] = flight.getArrival();
+        vector<thread> threads(max);
+        int c = 0;
+
+        int n = airportCodes.size();
+        floydMatrix = vector<vector<int>>(n, vector<int>(n, INF));
+        nextMatrix = vector<vector<int>>(n, vector<int>(n, -1));
+        mutexVector = vector<mutex>(n);
+
+        for(int i = 0; i < n; i++) {
+            floydMatrix[i][i] = 0;
+            threads[c++] = thread(&DirectedGraph::threadWorkerInitRow, this, i);
+            c %= max;
+            if(threads[c].joinable())
+                threads[c].join();
+        }
+        for(c = 0; c < max; c++) {
+            if(threads[c].joinable())
+            threads[c].join();
+        }
+        c = 0;
+        //modified Floyd Warshall Algorithm
+        for(int mid = 0; mid < n; mid++) {
+            for(int i = 0; i < n; i++) {
+                if(floydMatrix[i][mid] != INF) {
+                    threads[c++] = thread(&DirectedGraph::threadWorkerCompute, this, i, mid, n);
+                    c %= max;
+                    if(threads[c].joinable())
+                        threads[c].join();
+                }
             }
         }
-        //modified Floyd Warshall Algorithm
-        for (auto itMid : airports) {
-            const string *midpoint = &(itMid.first);
-            for (auto itDepart : airports) {
-                threads.push_back(thread(&DirectedGraph::threadWorkerCompute, this, itDepart.first, *midpoint));
-                if(--c <= 0) {
-                    for(thread& t : threads) {
-                        t.join();
-                    }
-                    threads.clear();
-                    c = max;
-                }
-            }
-            if(threads.size() != 0) {
-                for(thread &t : threads) {
-                    t.join();
-                }
-                threads.clear();
-                c = max;
-            }
+        for(c = 0; c < max; c++) {
+            if(threads[c].joinable())
+                threads[c].join();
         }
     }
 public:
@@ -293,6 +294,7 @@ public:
         }
 
         if(update) {//if the floydMap was never made or if there were any flights added, generate it first.
+            //Multithreading will be faster if there is more data.
             //generateFloydMapMT();
             generateFloydMap();
             update = false;
@@ -301,6 +303,9 @@ public:
         int to = idMap[destination];
         //return empty path if there is no path.
         if(nextMatrix[from][to] == -1) {
+            if(from == to) {//If the path is to itself
+                path.addToPath(&airports.find(origin)->second);
+            }
             return path;
         }
         path.addToPath(&airports.find(origin)->second);
@@ -310,66 +315,68 @@ public:
         }
         return path;
     }
+
+    void parseData(string airportFile, string flightFile) {
+        //first, get all the airport iata values.
+        unordered_map<string, string> airportNames;
+        fstream file (airportFile);
+        if(file.is_open())
+        {
+            //skip the first line, since it is the column names.
+            string line;
+            getline(file, line);
+            //while the lines exist
+            while(getline(file, line))
+            {
+                stringstream str(line);
+
+                string iata, airport;
+                getline(str, iata, ',');
+                getline(str, airport, ',');
+                //now insert into the map.
+                airportNames.emplace(iata, airport);
+            }
+            file.close();
+        } else {
+            return;
+        }
+        //now open the flights file to start adding flights to the graph
+        file.open(flightFile);
+        if(file.is_open())
+        {
+            string line;
+            vector<string> row;
+            //skip first line (column names)
+            getline(file, line);
+            //while the lines exist
+            while(getline(file, line))
+            {
+                row.clear();
+                string word;
+                stringstream str(line);
+                while(getline(str, word, ',')) {
+                    row.push_back(word);
+                }
+                //the columns are as follows: (index),flight_date,origin,dest,cancelled,distance,actual_elapsed_time
+                //we need indexes 2,3,4,6 -> origin,dest,cancelled, actual_elapsed_time
+                try {//in case there is a parsing error, skip the line and continue.
+                    if (row[4] == "0" && row.size() == 7) {//if the flight was not canceled, add it.
+                        string &origin = row[2];
+                        string &dest = row[3];
+                        int time = stoi(row[6]);
+                        addFlight(airportNames[origin], origin, airportNames[dest], dest, time);
+                    }
+                } catch (...) {
+                }
+            }
+        }
+        else {
+            return;
+        }
+        getAirportCodes();
+    }
 };
 
-void parseData(DirectedGraph& flights, string airportFile, string flightFile) {
-    //first, get all the airport iata values.
-    unordered_map<string, string> airportNames;
-    fstream file (airportFile);
-    if(file.is_open())
-    {
-        //skip the first line, since it is the column names.
-        string line;
-        getline(file, line);
-        //while the lines exist
-        while(getline(file, line))
-        {
-            stringstream str(line);
-            //just need the first two values: the IATA & Airport name
-            string iata, airport;
-            getline(str, iata, ',');
-            getline(str, airport, ',');
-            //now insert into the map.
-            airportNames.emplace(iata, airport);
-        }
-        file.close();
-    } else {
-        return;
-    }
-    //now open the flights file to start adding flights to the graph
-    file.open(flightFile);
-    if(file.is_open())
-    {
-        string line;
-        vector<string> row;
-        //skip first line (column names)
-        getline(file, line);
-        //while the lines exist
-        while(getline(file, line))
-        {
-            row.clear();
-            string word;
-            stringstream str(line);
-            while(getline(str, word, ',')) {
-                row.push_back(word);
-            }
-            //the columns are as follows: (index),flight_date,origin,dest,cancelled,distance,actual_elapsed_time
-            //we need indexes 2,3,4,6 -> origin,dest,cancelled, actual_elapsed_time
-            try {//in case there is a parsing error, skip the line and continue.
-                if (row[4] == "0" && row.size() == 7) {//if the flight was not canceled, add it.
-                    string &origin = row[2];
-                    string &dest = row[3];
-                    int time = stoi(row[6]);
-                    flights.addFlight(airportNames[origin], origin, airportNames[dest], dest, time);
-                }
-            } catch (...) {
-            }
-        }
-    }
-    else {
-        return;
-    }
-    flights.getAirportCodes();
-}
+
 
 #endif //J_CUBED_FLIGHTS_DIRECTEDGRAPH_H

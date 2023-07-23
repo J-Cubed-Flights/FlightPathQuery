@@ -12,13 +12,18 @@ using namespace std;
 
 // Main driver function, prevents the main() function from accessing memory directly
 void mainDriver() {
+    //useful timer
+    chrono::time_point<std::chrono::system_clock> start;
+    std::chrono::duration<double> elapsed_seconds;
+    start = std::chrono::system_clock::now();
+
+
     // Initialize an empty DirectedGraph object
     DirectedGraph flights;
-    parseData(flights, "../data/airports.csv", "../data/transport_data_2015_january.csv");
+    flights.parseData("../data/airports.csv", "../data/transport_data_2015_january.csv");
+    elapsed_seconds = std::chrono::system_clock::now() - start;
+    cout << "parsing completed in " << elapsed_seconds.count() << "s\n";
     //cout << "parsing complete" << endl;
-    //useful timer
-    chrono::time_point<std::chrono::system_clock> start, end;
-    std::chrono::duration<double> elapsed_seconds;
     //for listing all the airports
 //    vector<string> names = flights.getAirportNames();
 //    for(string s : names) {
@@ -37,14 +42,12 @@ void mainDriver() {
 //    cout << "completed in " << elapsed_seconds.count() << "s\n";
 
 //  For testing path finding with Floyd Warshall Algorithm:
-//  Note: The first time it is called, it takes ~97 seconds to run,
-//  then it takes less than 0.01 ms to run each call after that.
+// ----------------------- Completed------------------------
 //    start = std::chrono::system_clock::now();
 //    string from = "ABE";
 //    string to = "ATL";
 //    FlightPath result = flights.floydPath(from, to);
-//    end = std::chrono::system_clock::now();
-//    elapsed_seconds = end - start;
+//    elapsed_seconds = std::chrono::system_clock::now() - start;
 //    cout << result.toString(true) << endl;
 //    cout << "completed in " << elapsed_seconds.count() << "s\n";
 //
@@ -52,8 +55,7 @@ void mainDriver() {
 //    from = "SLC";
 //    to = "GNV";
 //    result = flights.floydPath(from, to);
-//    end = std::chrono::system_clock::now();
-//    elapsed_seconds = end - start;
+//    elapsed_seconds = std::chrono::system_clock::now() - start;
 //    cout << result.toString(true) << endl;
 //    cout << "completed in " << elapsed_seconds.count() << "s\n";
 

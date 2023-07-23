@@ -571,9 +571,9 @@ private: System::Void bkgdWorkerDjik_RunWorkerCompleted(System::Object^ sender, 
 	rwl->ReleaseReaderLock();
 }
 private: System::Void bkgdCodeLoader_DoWork(System::Object^ sender, System::ComponentModel::DoWorkEventArgs^ e) {
-	parseData(*graph, "../../data/airports.csv", "../../data/transport_data_2015_january.csv");
+	graph->parseData("../../data/airports.csv", "../../data/transport_data_2015_january.csv");
 	if (graph->size() == 0) {
-		parseData(*graph, "data/airports.csv", "data/transport_data_2015_january.csv");
+		graph->parseData("data/airports.csv", "data/transport_data_2015_january.csv");
 	}
 	airportList->Invoke(gcnew Action(this, &MyForm::loadList));
 }
