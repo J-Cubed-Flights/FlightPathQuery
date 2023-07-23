@@ -38,6 +38,12 @@ void mainDriver() {
     // Initialize an empty DirectedGraph object
     DirectedGraph flights;
     flights.parseData("../data/airports.csv", "../data/transport_data_2015_january.csv");
+    if(flights.size() == 0) {
+        flights.parseData("data/airports.csv", "data/transport_data_2015_january.csv");
+    }
+    if(flights.size() == 0) {
+        flights.parseData("../../data/airports.csv", "../../data/transport_data_2015_january.csv");
+    }
     elapsed_seconds = std::chrono::system_clock::now() - start;
     cout << "parsing completed in " << elapsed_seconds.count() << "s\n";
     //cout << "parsing complete" << endl;
