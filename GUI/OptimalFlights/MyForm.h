@@ -29,10 +29,20 @@ namespace OptimalFlights {
 		String^ d_time;
 		String^ f_path;
 		String^ f_time;
+		String^ folderLocation;
 		DateTime dStartTime;
 		DateTime fwStartTime;
 		ReaderWriterLock^ rwl;
 	private: System::ComponentModel::BackgroundWorker^ bkgdWorkerFloyd;
+	private: System::Windows::Forms::MenuStrip^ menuStrip1;
+	private: System::Windows::Forms::ToolStripMenuItem^ optionsToolStripMenuItem;
+	private: System::Windows::Forms::ToolStripMenuItem^ chooseDataFolderToolStripMenuItem1;
+	private: System::Windows::Forms::ToolStripMenuItem^ resetToolStripMenuItem;
+
+
+	private: System::Windows::Forms::ToolStripTextBox^ toolStripTextBox1;
+
+	private: System::Windows::Forms::FolderBrowserDialog^ fbd;
 	private: System::ComponentModel::BackgroundWorker^ bkgdCodeLoader;
 	private: System::ComponentModel::BackgroundWorker^ bkgdWorkerDjik;
 
@@ -40,6 +50,7 @@ namespace OptimalFlights {
 	public:
 		MyForm(void)
 		{
+			folderLocation = "../../data";
 			strs = gcnew cliext::vector<String^>();
 			graph = new DirectedGraph();
 			rwl = gcnew ReaderWriterLock();
@@ -97,23 +108,13 @@ namespace OptimalFlights {
 	private: System::Windows::Forms::Button^ searchButton;
 	private: System::Windows::Forms::TextBox^ start;
 	private: System::Windows::Forms::TextBox^ end;
-
 	private: System::Windows::Forms::Label^ startText;
 	private: System::Windows::Forms::Label^ destText;
 	private: System::Windows::Forms::ListBox^ resultList;
-
-
-
-
-
 	private: System::Windows::Forms::Label^ DjikstraText;
 	private: System::Windows::Forms::Label^ dTime;
 	private: System::Windows::Forms::Label^ floydText;
 	private: System::Windows::Forms::Label^ fTime;
-
-
-
-
 
 	private: System::Windows::Forms::Label^ resultText;
 
@@ -127,10 +128,6 @@ namespace OptimalFlights {
 	private: System::Windows::Forms::Timer^ timerFloyd;
 
 	private: System::ComponentModel::IContainer^ components;
-
-
-
-	protected:
 
 
 	private:
@@ -168,15 +165,22 @@ namespace OptimalFlights {
 			this->bkgdWorkerDjik = (gcnew System::ComponentModel::BackgroundWorker());
 			this->bkgdWorkerFloyd = (gcnew System::ComponentModel::BackgroundWorker());
 			this->bkgdCodeLoader = (gcnew System::ComponentModel::BackgroundWorker());
+			this->fbd = (gcnew System::Windows::Forms::FolderBrowserDialog());
+			this->menuStrip1 = (gcnew System::Windows::Forms::MenuStrip());
+			this->optionsToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->chooseDataFolderToolStripMenuItem1 = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->resetToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->menuStrip1->SuspendLayout();
 			this->SuspendLayout();
 			// 
 			// searchButton
 			// 
 			this->searchButton->BackColor = System::Drawing::SystemColors::ControlLightLight;
 			this->searchButton->Cursor = System::Windows::Forms::Cursors::Hand;
-			this->searchButton->Location = System::Drawing::Point(385, 34);
+			this->searchButton->Location = System::Drawing::Point(385, 42);
+			this->searchButton->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
 			this->searchButton->Name = L"searchButton";
-			this->searchButton->Size = System::Drawing::Size(97, 45);
+			this->searchButton->Size = System::Drawing::Size(97, 56);
 			this->searchButton->TabIndex = 0;
 			this->searchButton->Text = L"Search";
 			this->searchButton->UseVisualStyleBackColor = false;
@@ -184,35 +188,37 @@ namespace OptimalFlights {
 			// 
 			// start
 			// 
-			this->start->Location = System::Drawing::Point(24, 57);
+			this->start->Location = System::Drawing::Point(24, 71);
+			this->start->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
 			this->start->Name = L"start";
-			this->start->Size = System::Drawing::Size(158, 22);
+			this->start->Size = System::Drawing::Size(158, 27);
 			this->start->TabIndex = 1;
 			this->start->TextChanged += gcnew System::EventHandler(this, &MyForm::start_TextChanged);
 			// 
 			// end
 			// 
-			this->end->Location = System::Drawing::Point(194, 57);
+			this->end->Location = System::Drawing::Point(194, 71);
+			this->end->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
 			this->end->Name = L"end";
-			this->end->Size = System::Drawing::Size(158, 22);
+			this->end->Size = System::Drawing::Size(158, 27);
 			this->end->TabIndex = 2;
 			this->end->TextChanged += gcnew System::EventHandler(this, &MyForm::end_TextChanged);
 			// 
 			// startText
 			// 
 			this->startText->AutoSize = true;
-			this->startText->Location = System::Drawing::Point(59, 34);
+			this->startText->Location = System::Drawing::Point(59, 42);
 			this->startText->Name = L"startText";
-			this->startText->Size = System::Drawing::Size(66, 16);
+			this->startText->Size = System::Drawing::Size(79, 20);
 			this->startText->TabIndex = 3;
 			this->startText->Text = L"Start point";
 			// 
 			// destText
 			// 
 			this->destText->AutoSize = true;
-			this->destText->Location = System::Drawing::Point(234, 34);
+			this->destText->Location = System::Drawing::Point(234, 42);
 			this->destText->Name = L"destText";
-			this->destText->Size = System::Drawing::Size(74, 16);
+			this->destText->Size = System::Drawing::Size(85, 20);
 			this->destText->TabIndex = 4;
 			this->destText->Text = L"Destination";
 			// 
@@ -220,18 +226,19 @@ namespace OptimalFlights {
 			// 
 			this->resultList->FormattingEnabled = true;
 			this->resultList->HorizontalScrollbar = true;
-			this->resultList->ItemHeight = 16;
+			this->resultList->ItemHeight = 20;
 			this->resultList->Items->AddRange(gcnew cli::array< System::Object^  >(1) { L"Results appear here" });
-			this->resultList->Location = System::Drawing::Point(13, 145);
+			this->resultList->Location = System::Drawing::Point(13, 181);
+			this->resultList->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
 			this->resultList->Name = L"resultList";
-			this->resultList->Size = System::Drawing::Size(545, 292);
+			this->resultList->Size = System::Drawing::Size(545, 364);
 			this->resultList->TabIndex = 5;
 			// 
 			// DjikstraText
 			// 
 			this->DjikstraText->AutoSize = true;
 			this->DjikstraText->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 12));
-			this->DjikstraText->Location = System::Drawing::Point(655, 57);
+			this->DjikstraText->Location = System::Drawing::Point(655, 71);
 			this->DjikstraText->Name = L"DjikstraText";
 			this->DjikstraText->Size = System::Drawing::Size(76, 25);
 			this->DjikstraText->TabIndex = 6;
@@ -240,9 +247,9 @@ namespace OptimalFlights {
 			// dTime
 			// 
 			this->dTime->AutoSize = true;
-			this->dTime->Location = System::Drawing::Point(777, 64);
+			this->dTime->Location = System::Drawing::Point(777, 80);
 			this->dTime->Name = L"dTime";
-			this->dTime->Size = System::Drawing::Size(43, 16);
+			this->dTime->Size = System::Drawing::Size(63, 20);
 			this->dTime->TabIndex = 9;
 			this->dTime->Text = L"---------";
 			// 
@@ -250,7 +257,7 @@ namespace OptimalFlights {
 			// 
 			this->floydText->AutoSize = true;
 			this->floydText->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 12));
-			this->floydText->Location = System::Drawing::Point(599, 92);
+			this->floydText->Location = System::Drawing::Point(599, 115);
 			this->floydText->Name = L"floydText";
 			this->floydText->Size = System::Drawing::Size(142, 25);
 			this->floydText->TabIndex = 10;
@@ -259,9 +266,9 @@ namespace OptimalFlights {
 			// fTime
 			// 
 			this->fTime->AutoSize = true;
-			this->fTime->Location = System::Drawing::Point(777, 99);
+			this->fTime->Location = System::Drawing::Point(777, 124);
 			this->fTime->Name = L"fTime";
-			this->fTime->Size = System::Drawing::Size(43, 16);
+			this->fTime->Size = System::Drawing::Size(63, 20);
 			this->fTime->TabIndex = 11;
 			this->fTime->Text = L"---------";
 			// 
@@ -269,7 +276,7 @@ namespace OptimalFlights {
 			// 
 			this->resultText->AutoSize = true;
 			this->resultText->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 10.8F));
-			this->resultText->Location = System::Drawing::Point(12, 120);
+			this->resultText->Location = System::Drawing::Point(12, 150);
 			this->resultText->Name = L"resultText";
 			this->resultText->Size = System::Drawing::Size(75, 22);
 			this->resultText->TabIndex = 12;
@@ -280,7 +287,7 @@ namespace OptimalFlights {
 			this->elapsedtimeText->AutoSize = true;
 			this->elapsedtimeText->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 13.8F, static_cast<System::Drawing::FontStyle>((System::Drawing::FontStyle::Bold | System::Drawing::FontStyle::Underline)),
 				System::Drawing::GraphicsUnit::Point, static_cast<System::Byte>(0)));
-			this->elapsedtimeText->Location = System::Drawing::Point(644, 9);
+			this->elapsedtimeText->Location = System::Drawing::Point(644, 11);
 			this->elapsedtimeText->Name = L"elapsedtimeText";
 			this->elapsedtimeText->Size = System::Drawing::Size(176, 29);
 			this->elapsedtimeText->TabIndex = 13;
@@ -289,9 +296,10 @@ namespace OptimalFlights {
 			// clearButton
 			// 
 			this->clearButton->Cursor = System::Windows::Forms::Cursors::Hand;
-			this->clearButton->Location = System::Drawing::Point(385, 85);
+			this->clearButton->Location = System::Drawing::Point(385, 106);
+			this->clearButton->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
 			this->clearButton->Name = L"clearButton";
-			this->clearButton->Size = System::Drawing::Size(97, 45);
+			this->clearButton->Size = System::Drawing::Size(97, 56);
 			this->clearButton->TabIndex = 14;
 			this->clearButton->Text = L"Clear";
 			this->clearButton->UseVisualStyleBackColor = true;
@@ -300,17 +308,18 @@ namespace OptimalFlights {
 			// airportList
 			// 
 			this->airportList->FormattingEnabled = true;
-			this->airportList->ItemHeight = 16;
-			this->airportList->Location = System::Drawing::Point(573, 145);
+			this->airportList->ItemHeight = 20;
+			this->airportList->Location = System::Drawing::Point(573, 181);
+			this->airportList->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
 			this->airportList->Name = L"airportList";
-			this->airportList->Size = System::Drawing::Size(317, 292);
+			this->airportList->Size = System::Drawing::Size(317, 364);
 			this->airportList->TabIndex = 15;
 			// 
 			// airportTitle
 			// 
 			this->airportTitle->AutoSize = true;
 			this->airportTitle->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 10.8F));
-			this->airportTitle->Location = System::Drawing::Point(569, 120);
+			this->airportTitle->Location = System::Drawing::Point(569, 150);
 			this->airportTitle->Name = L"airportTitle";
 			this->airportTitle->Size = System::Drawing::Size(125, 22);
 			this->airportTitle->TabIndex = 16;
@@ -320,9 +329,9 @@ namespace OptimalFlights {
 			// 
 			this->invalidCodeLabel->AutoSize = true;
 			this->invalidCodeLabel->ForeColor = System::Drawing::Color::Red;
-			this->invalidCodeLabel->Location = System::Drawing::Point(89, 85);
+			this->invalidCodeLabel->Location = System::Drawing::Point(89, 106);
 			this->invalidCodeLabel->Name = L"invalidCodeLabel";
-			this->invalidCodeLabel->Size = System::Drawing::Size(195, 16);
+			this->invalidCodeLabel->Size = System::Drawing::Size(217, 20);
 			this->invalidCodeLabel->TabIndex = 17;
 			this->invalidCodeLabel->Text = L"Please input valid airport codes";
 			this->invalidCodeLabel->Visible = false;
@@ -348,13 +357,52 @@ namespace OptimalFlights {
 			// bkgdCodeLoader
 			// 
 			this->bkgdCodeLoader->DoWork += gcnew System::ComponentModel::DoWorkEventHandler(this, &MyForm::bkgdCodeLoader_DoWork);
-			this->bkgdCodeLoader->RunWorkerCompleted += gcnew System::ComponentModel::RunWorkerCompletedEventHandler(this, &MyForm::bkgdCodeLoader_RunWorkerCompleted);
+			// 
+			// fbd
+			// 
+			this->fbd->RootFolder = System::Environment::SpecialFolder::UserProfile;
+			this->fbd->ShowNewFolderButton = false;
+			// 
+			// menuStrip1
+			// 
+			this->menuStrip1->BackColor = System::Drawing::SystemColors::Control;
+			this->menuStrip1->ImageScalingSize = System::Drawing::Size(20, 20);
+			this->menuStrip1->Items->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(1) { this->optionsToolStripMenuItem });
+			this->menuStrip1->Location = System::Drawing::Point(0, 0);
+			this->menuStrip1->Name = L"menuStrip1";
+			this->menuStrip1->Size = System::Drawing::Size(902, 28);
+			this->menuStrip1->TabIndex = 18;
+			this->menuStrip1->Text = L"menuStrip1";
+			// 
+			// optionsToolStripMenuItem
+			// 
+			this->optionsToolStripMenuItem->DropDownItems->AddRange(gcnew cli::array< System::Windows::Forms::ToolStripItem^  >(2) {
+				this->chooseDataFolderToolStripMenuItem1,
+					this->resetToolStripMenuItem
+			});
+			this->optionsToolStripMenuItem->Name = L"optionsToolStripMenuItem";
+			this->optionsToolStripMenuItem->Size = System::Drawing::Size(75, 24);
+			this->optionsToolStripMenuItem->Text = L"Options";
+			// 
+			// chooseDataFolderToolStripMenuItem1
+			// 
+			this->chooseDataFolderToolStripMenuItem1->Name = L"chooseDataFolderToolStripMenuItem1";
+			this->chooseDataFolderToolStripMenuItem1->Size = System::Drawing::Size(223, 26);
+			this->chooseDataFolderToolStripMenuItem1->Text = L"Choose Data Folder";
+			this->chooseDataFolderToolStripMenuItem1->Click += gcnew System::EventHandler(this, &MyForm::chooseDataFolderToolStripMenuItem1_Click);
+			// 
+			// resetToolStripMenuItem
+			// 
+			this->resetToolStripMenuItem->Name = L"resetToolStripMenuItem";
+			this->resetToolStripMenuItem->Size = System::Drawing::Size(223, 26);
+			this->resetToolStripMenuItem->Text = L"Reset";
+			this->resetToolStripMenuItem->Click += gcnew System::EventHandler(this, &MyForm::resetToolStripMenuItem_Click);
 			// 
 			// MyForm
 			// 
-			this->AutoScaleDimensions = System::Drawing::SizeF(8, 16);
+			this->AutoScaleDimensions = System::Drawing::SizeF(8, 20);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
-			this->ClientSize = System::Drawing::Size(902, 452);
+			this->ClientSize = System::Drawing::Size(902, 565);
 			this->Controls->Add(this->invalidCodeLabel);
 			this->Controls->Add(this->airportTitle);
 			this->Controls->Add(this->airportList);
@@ -371,9 +419,14 @@ namespace OptimalFlights {
 			this->Controls->Add(this->end);
 			this->Controls->Add(this->start);
 			this->Controls->Add(this->searchButton);
+			this->Controls->Add(this->menuStrip1);
+			this->Font = (gcnew System::Drawing::Font(L"Segoe UI", 9));
+			this->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
 			this->Name = L"MyForm";
 			this->Text = L"Optimal Flight Search";
 			this->Load += gcnew System::EventHandler(this, &MyForm::formLoad);
+			this->menuStrip1->ResumeLayout(false);
+			this->menuStrip1->PerformLayout();
 			this->ResumeLayout(false);
 			this->PerformLayout();
 
@@ -409,10 +462,14 @@ namespace OptimalFlights {
 	}
 	private: void loadList() {
 		vector<std::string> names = graph->getAirportNames();
+		airportList->Items->Clear();
 		for (std::string s : names) {
 			String^ str = gcnew String(s.c_str());
 			strs->push_back(str);
 			airportList->Items->Add(str);
+		}
+		if (names.size() == 0) {
+			airportList->Items->Add("Files not found at " + folderLocation);
 		}
 	}
 	private: System::Void formLoad(System::Object^ sender, System::EventArgs^ e) {
@@ -571,15 +628,32 @@ private: System::Void bkgdWorkerDjik_RunWorkerCompleted(System::Object^ sender, 
 	rwl->ReleaseReaderLock();
 }
 private: System::Void bkgdCodeLoader_DoWork(System::Object^ sender, System::ComponentModel::DoWorkEventArgs^ e) {
-	graph->parseData("../../data/airports.csv", "../../data/transport_data_2015_january.csv");
+	msclr::interop::marshal_context context;
+	std::string folder = context.marshal_as<std::string>(folderLocation);
+	graph->parseData(folder + "/airports.csv", folder + "/transport_data_2015_january.csv");
+	
 	if (graph->size() == 0) {
 		graph->parseData("data/airports.csv", "data/transport_data_2015_january.csv");
 	}
 	airportList->Invoke(gcnew Action(this, &MyForm::loadList));
 }
 
-private: System::Void bkgdCodeLoader_RunWorkerCompleted(System::Object^ sender, System::ComponentModel::RunWorkerCompletedEventArgs^ e) {
-	airportList->Items->RemoveAt(0);
+
+//Signal to find folder to update data
+private: System::Void chooseDataFolderToolStripMenuItem1_Click(System::Object^ sender, System::EventArgs^ e) {
+	fbd->ShowDialog();
+	folderLocation = fbd->SelectedPath;
+	while (bkgdCodeLoader->IsBusy) {
+		Thread::Sleep(500);
+	}
+	airportList->Items->Clear();
+	airportList->Items->Add("loading...");
+	graph->clear();
+	bkgdCodeLoader->RunWorkerAsync();
+}
+//Signal to reset Floyd Warshall
+private: System::Void resetToolStripMenuItem_Click(System::Object^ sender, System::EventArgs^ e) {
+	graph->reset();
 }
 };
 }

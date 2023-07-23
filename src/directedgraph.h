@@ -161,6 +161,11 @@ public:
     int size() {
         return airports.size();
     }
+    void clear() {//should clear the graph. Used in GUI to search new folder
+        reset();
+        airports.clear();
+        airportCodes.clear();
+    }
     //generate the 3 shortest paths as a vector
     FlightPath djikstraPath(string &originCode, string &destinationCode)
     {
@@ -220,6 +225,9 @@ public:
         }
         return path;
     }
+    void reset() {//used in GUI to help reset the FloydPath without restarting the executable.
+        update = true;
+    }
     //generate the 3 shortest paths using floyd warshall algorithm
     FlightPath floydPath(std::string &origin, std::string &destination) {
 
@@ -231,8 +239,6 @@ public:
         }
 
         if(update) {//if the floydMap was never made or if there were any flights added, generate it first.
-            //Multithreading will be faster if there is more data.
-            //generateFloydMapMT();
             generateFloydMap();
             update = false;
         }

@@ -54,7 +54,7 @@ void mainDriver() {
 //    }
 //    cout << "size:" << names.size() << endl;
 
-    test("ABE","GNV", flights);
+    test("ABE","ACT", flights);
 }
 
 
