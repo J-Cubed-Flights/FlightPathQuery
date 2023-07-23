@@ -18,17 +18,16 @@ using namespace std;
 
 class DirectedGraph {
 private:
+    const int INF = INT_MAX;
     unordered_map<string, Airport> airports; // string stores the Departure Airport's IATA Code (i.e. JFK)
     Airport nullAirport; //store a null airport, which is used in getAirport
     const int layoverTime;
     bool update = true; //used to determine if we need to update the Floyd Warshall matrix next time we call it.
 
-    //the matrix below will be built the first time that the floydPath function.
+    //the matrixes below will be built the first time that the floydPath function.
     //this optimized the time needed to make the map after the first time it is called.
-    unordered_map<string, unordered_map<string, int>> floydMap;
-    unordered_map<string, unordered_map<string, string>> nextMap;
-    //TODO: convert to matrices to optimize time.
-
+    vector<vector<int>> floydMatrix;
+    vector<vector<int>> nextMatrix;
     //used for quick access to match ID with airport code;
     unordered_map<string, int> idMap;
     vector<string> airportCodes;
@@ -70,40 +69,30 @@ private:
     //generates the floyd warshall  map if it is the first time.
     void generateFloydMap() {
         //Initialize: add all the existing direct paths to the matrix
-        floydMap.clear();
-        nextMap.clear();
-        for (auto fromIt : airports) {
-            Airport& current = fromIt.second;
-            string port = fromIt.first;
-            floydMap[port][port] = 0;
-            auto &row = floydMap[port];
-            auto &rowN = nextMap[port];
-            for(auto toIt = current.begin(); toIt != current.end(); toIt++) {
-                Flight& flight = toIt->second;
-                row[flight.getArrival()] = flight.getAverageFlightTime();
-                rowN[flight.getArrival()] = flight.getArrival();
+        int n = airportCodes.size();
+        floydMatrix = vector<vector<int>>(n, vector<int>(n, INF));
+        nextMatrix = vector<vector<int>>(n, vector<int>(n, -1));
+        for(int i = 0; i < n; i++) {
+            floydMatrix[i][i] = 0;
+            Airport& current = airports.at(airportCodes[i]);
+            for(auto it : current) {
+                Flight& flight = it.second;
+                int j = idMap[flight.getArrival()];
+                floydMatrix[i][j] = flight.getAverageFlightTime();
+                nextMatrix[i][j] = j;
             }
         }
+
         //modified Floyd Warshall Algorithm
-        for (auto itMid : airports) {
-            const string& midpoint = itMid.first;
-            auto &midM = floydMap[midpoint];
-            for (auto itDepart : airports) {
-                const string& depart = itDepart.first;
-                auto &departM = floydMap[depart];
-                if(departM.find(midpoint) == departM.end()) {
-                    continue;
-                }
-                for (auto itArrive : airports) {
-                    const string& arrive = itArrive.first;
-                    if(midM.find(arrive) == midM.end()) {
+        for(int mid = 0; mid < n; mid++) {
+            for(int i = 0; i < n; i++) {
+                for(int j = 0; j < n; j++) {
+                    if (floydMatrix[i][mid] == INF || floydMatrix[mid][j] == INF) {
                         continue;
                     }
-                    //if this path doesn't exist or the new path is faster than the previous path
-                    if(departM.find(arrive) == departM.end()
-                        || departM[arrive] > departM[midpoint] + layoverTime + midM[arrive]) {
-                        departM[arrive] = departM[midpoint] + layoverTime + midM[arrive];
-                        nextMap[depart][arrive] = nextMap[depart][midpoint];
+                    if (floydMatrix[i][j] > floydMatrix[i][mid] + layoverTime + floydMatrix[mid][j]) {
+                        floydMatrix[i][j] = floydMatrix[i][mid] + layoverTime + floydMatrix[mid][j];
+                        nextMatrix[i][j] = nextMatrix[i][mid];
                     }
                 }
             }
@@ -209,14 +198,15 @@ public:
         if(airportCodes.size() == airports.size()) {
             return airportCodes;
         }
-        string data;
         for(auto it : airports)
         {
-            data = it.first;
-            airportCodes.push_back(data);
+            airportCodes.push_back(it.first);
         }
         quickSort(airportCodes, 0, airportCodes.size() - 1);
-        //Todo: assign id's
+        //Assign each airport an ID (it's index).
+        for(int i = 0; i < airportCodes.size(); i++) {
+            idMap[airportCodes[i]] = i;
+        }
         return airportCodes;
     }
     vector<string> getAirportNames() {
@@ -303,24 +293,20 @@ public:
         }
 
         if(update) {//if the floydMap was never made or if there were any flights added, generate it first.
-            generateFloydMapMT();
-            //generateFloydMap();
+            //generateFloydMapMT();
+            generateFloydMap();
             update = false;
         }
-
+        int from = idMap[origin];
+        int to = idMap[destination];
         //return empty path if there is no path.
-        if(nextMap[origin].find(destination) == nextMap[origin].end()) {
+        if(nextMatrix[from][to] == -1) {
             return path;
         }
-        //set the shortest path time.
-        path.addTime(floydMap[origin][destination]);
-
-        //start at the origin and create the path.
-        string cur = origin;
-        path.addToPath(&airports.find(cur)->second);
-        while(cur != destination) {
-            cur = nextMap[cur][destination];
-            path.addToPath(&airports.find(cur)->second);
+        path.addToPath(&airports.find(origin)->second);
+        while(from != to) {
+            from = nextMatrix[from][to];
+            path.addToPath(&airports.find(airportCodes[from])->second);
         }
         return path;
     }
