@@ -7,26 +7,19 @@
 #include <chrono>
 #include "directedgraph.h"
 
-
 using namespace std;
 
-void test(string from, string to, DirectedGraph& flights) {
-    chrono::time_point<std::chrono::system_clock> start;
-    std::chrono::duration<double> elapsed_seconds;
 
-    start = std::chrono::system_clock::now();
-    FlightPath result = flights.floydPath(from, to);
-    elapsed_seconds = std::chrono::system_clock::now() - start;
-    cout << result.toString(true) << endl;
-    cout << "completed in " << elapsed_seconds.count() << "s\n";
+//test the pathfinding for both Djiksta's algorithm and Floyd Warshall's algorithm
+void test(string from, string to, DirectedGraph& flights);
+// Main driver function, prevents the main() function from accessing memory directly
+void mainDriver();
 
-    result = flights.djikstraPath(from, to);
-    elapsed_seconds = std::chrono::system_clock::now() - start;
-    cout << result.toString(true) << endl;
-    cout << "completed in " << elapsed_seconds.count() << "s\n";
-
-
+int main() {
+    mainDriver();
+    return 0;
 }
+
 // Main driver function, prevents the main() function from accessing memory directly
 void mainDriver() {
     //useful timer
@@ -46,7 +39,7 @@ void mainDriver() {
     }
     elapsed_seconds = std::chrono::system_clock::now() - start;
     cout << "parsing completed in " << elapsed_seconds.count() << "s\n";
-    //cout << "parsing complete" << endl;
+
     //for listing all the airports
 //    vector<string> names = flights.getAirportNames();
 //    for(string s : names) {
@@ -57,8 +50,19 @@ void mainDriver() {
     test("ABE","ACT", flights);
 }
 
+//test the pathfinding for both Djiksta's algorithm and Floyd Warshall's algorithm
+void test(string from, string to, DirectedGraph& flights) {
+    chrono::time_point<std::chrono::system_clock> start;
+    std::chrono::duration<double> elapsed_seconds;
 
-int main() {
-    mainDriver();
-    return 0;
+    start = std::chrono::system_clock::now();
+    FlightPath result = flights.floydPath(from, to);
+    elapsed_seconds = std::chrono::system_clock::now() - start;
+    cout << result.toString(true) << endl;
+    cout << "completed in " << elapsed_seconds.count() << "s\n";
+
+    result = flights.djikstraPath(from, to);
+    elapsed_seconds = std::chrono::system_clock::now() - start;
+    cout << result.toString(true) << endl;
+    cout << "completed in " << elapsed_seconds.count() << "s\n";
 }
