@@ -11,7 +11,6 @@
 #include <unordered_map>
 #include <utility>
 #include <sstream>
-#include <mutex>
 
 using namespace std;
 
@@ -32,16 +31,21 @@ public:
     unordered_map<string, Flight>::iterator begin() {return flights.begin();}
     unordered_map<string, Flight>::iterator end() {return flights.end();}
     unordered_map<string, Flight>::iterator find(string& code) {return flights.find(code);}
+    unordered_map<string, Flight>::iterator find(const string& code) {return flights.find(code);}
+    Flight& operator[](string code){return flights[code];}
 
     //getter functions
     string getAirportName() const {return name;}
     string getAirportCode() const {return airportCode;}
+    int getID() {return id;};
     bool isNull() {return name.length() == 0;}
 
-    //for testing purposes
-    vector<string> printFlights();
+    //setter
+    void setID(int id) {this->id = id;}
 
+    //update Flight
     void updateFlight(string &arriveCode, int flightTime);
+
     //operators
     bool operator == (const Airport& a) {return airportCode == a.airportCode;}
     bool operator != (const Airport& a) {return airportCode != a.airportCode;}
@@ -50,16 +54,9 @@ public:
     bool operator < (const Airport& a) {return airportCode < a.airportCode;}
     bool operator > (const Airport& a) {return airportCode > a.airportCode;}
 
-    //Iterator Functions
-    unordered_map<string, Flight>::iterator begin() {return flights.begin();}
-    unordered_map<string, Flight>::iterator end() {return flights.end();}
-    unordered_map<string, Flight>::iterator find(string& code) {return flights.find(code);}
 
     //for testing purposes
     vector<string> printFlights();
-
-    //update flight function
-    void updateFlight(string &arriveCode, int flightTime);
 };
 //print all outgoing flights
 vector<string> Airport::printFlights() {
