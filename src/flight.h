@@ -12,7 +12,7 @@ using namespace std;
 
 class Flight {
 private:
-    string departureAirport; // should be same IATA as the Airport object it is stored in
+    string departureAirport;  // should be same IATA as the Airport object it is stored in
     string arrivalAirport;
     int flightCount;
     int totalMinutes;
