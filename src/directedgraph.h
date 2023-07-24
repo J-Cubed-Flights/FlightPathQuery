@@ -194,7 +194,7 @@ public:
             if(AirportIt->first == originCode)
                 flight_time[AirportIt->first] = 0;
             else if(airports[originCode].flights.find(AirportIt->first) == airports[originCode].flights.end())
-                flight_time[AirportIt->first] = -1;
+                flight_time[AirportIt->first] = INF;
             else
                 flight_time[AirportIt->first] = airports[originCode].flights[originCode].getAverageFlightTime();
         }
@@ -237,7 +237,7 @@ public:
             for(auto it = airports[shortest_flight].flights.begin(); it != airports[shortest_flight].flights.end(); it++)
             {
                 // Check if new flight time is less than saved flight time and change if necessary
-                if(flight_time[it->first] != -1 && flight_time[it->first] > path_time + current_airport.flights[it->first].getAverageFlightTime())
+                if(flight_time[it->first] != INF && flight_time[it->first] > path_time + current_airport.flights[it->first].getAverageFlightTime())
                 {
                     flight_time[it->first] = path_time + current_airport.flights[it->first].getAverageFlightTime();
                     predecessor[it->first] = shortest_flight;
