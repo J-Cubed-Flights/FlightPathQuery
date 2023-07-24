@@ -17,7 +17,7 @@ private:
     int flightCount;
     int totalMinutes;
 public:
-    Flight();
+    Flight(){};
     Flight(string &depart, string &arrive) {
         departureAirport = depart;
         arrivalAirport = arrive;
