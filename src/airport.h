@@ -52,18 +52,18 @@ public:
     unordered_map<string, Flight>::iterator find(string& code) {return flights.find(code);}
 
     //for testing purposes
-    string printFlights();
+    vector<string> printFlights();
 
     //update flight function
     void updateFlight(string &arriveCode, int flightTime);
 };
 //print all outgoing flights
-string Airport::printFlights() {
-    stringstream ss;
+vector<string> Airport::printFlights() {
+    vector<string> ss;
     for(auto it : flights) {
-        ss << it.second.getArrival() << " " << it.second.getAverageFlightTime() << "\n";
+        ss.push_back(it.second.getArrival() + " " + to_string(it.second.getAverageFlightTime()));
     }
-    return ss.str();
+    return ss;
 }
 //update a flight
 void Airport::updateFlight(string &arriveCode, int flightTime) {

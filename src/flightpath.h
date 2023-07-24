@@ -22,12 +22,11 @@ private:
     int totalFlightTime;
     vector<Airport*> stops;
     const int layover = 120;
-    //determine if totalFlightTime needs to be updated next time it is called
-    bool update;
+
 public:
     //constructors
-    FlightPath() : totalFlightTime(0), update(false) {};
-    FlightPath(FlightPath& copy) : stops(copy.getStops()), totalFlightTime(copy.getFlightTime()),update(copy.update) {};
+    FlightPath() : totalFlightTime(0) {};
+    FlightPath(FlightPath& copy) : stops(copy.getStops()), totalFlightTime(copy.getFlightTime()) {};
 
     //operator
     FlightPath& operator=(const FlightPath& other) {
@@ -56,33 +55,24 @@ vector<Airport*> FlightPath::getStops() {
 //add an airport stop to the back of the path
 void FlightPath::addToPath(Airport* stop)  {
     stops.push_back(stop);
-    update = true;
 }
 //add an airport stop to the back of the path
 void FlightPath::addToPath(Airport& stop)  {
     stops.push_back(&stop);
-    update = true;
 }
 //return the flight time
 int FlightPath::getFlightTime()
 {
-    if (update) {
-        totalFlightTime = 0;
-        for (int i = 1; i < stops.size(); i++) {
-            string s = stops[i]->getAirportCode();
-            totalFlightTime += stops[i - 1]->find(s)->second.getAverageFlightTime();
-        }
-        update = false;
+    totalFlightTime = 0;
+    for (int i = 1; i < stops.size(); i++) {
+        string s = stops[i]->getAirportCode();
+        totalFlightTime += stops[i - 1]->find(s)->second.getAverageFlightTime();
     }
     return totalFlightTime;
 }
 //return the flight time including layovers at each intermediate stop
 int FlightPath::getWithLayover()
 {
-    //if there is no flight path, then return 0
-    if (stops.size() == 0) {
-        return 0;
-    }
     // Here we are calculating total time with layovers in mind.
     // Adding 2 hours aka 120 minutes per extra stop(excluding the origin and destination) to totalFlightTime.
     int totalWithLayover = getFlightTime();
@@ -108,7 +98,7 @@ string FlightPath::toString(bool withLayover) {
     if(withLayover) {
         sstr << " (Average total time: " << getWithLayover() << " minutes)";
     } else {
-        sstr << " (Average total time: " << totalFlightTime << " minutes)";
+        sstr << " (Average total time: " << getFlightTime() << " minutes)";
     }
     return sstr.str();
 }

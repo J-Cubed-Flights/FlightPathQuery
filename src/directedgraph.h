@@ -11,8 +11,7 @@
 #include <string>
 #include <vector>
 #include <fstream>
-#include <thread>
-#include <mutex>
+#include <queue>
 
 using namespace std;
 
@@ -44,6 +43,11 @@ private:
 
     //generates airport id's after alphabetizing them.
     void generateAirportIDs();
+
+    //Comparator used on Djikstra's Algorithm
+    struct djikComparator {
+        bool operator()(pair<int, int> a, pair<int, int> b){return a.second > b.second;}
+    };
 
 public:
     //constructor
@@ -84,6 +88,8 @@ public:
     //generate the shortest path as a vector using Djikstra's algorithm
     FlightPath djikstraPath(string &originCode, string &destinationCode);
 
+    //generate the shortest path with Djikstra's algorithm using a minHeap.
+    FlightPath djikPath2(string &originCode, string &destinationCode);
     //Parse data from file locations and puts it into the graph
     //airportFile is used to get the IATA code and Airport name
     //flightFile is used to get the individual flights
@@ -381,6 +387,71 @@ FlightPath DirectedGraph::djikstraPath(string &originCode, string &destinationCo
             path.addToPath(&airports[destinationCode]);
         }
 
+    }
+    return path;
+}
+
+FlightPath DirectedGraph::djikPath2(string &originCode, string &destinationCode) {
+    FlightPath path;
+    if(!validCode(originCode) || !validCode(destinationCode)) {
+        return path;
+    }
+    //get the ids of origin airport
+    int from = airports[originCode].getID();
+    int to = airports[destinationCode].getID();
+    if(originCode == destinationCode) {
+        path.addToPath(airportVector[from]);
+        return path;
+    }
+    //initialize the vectors
+    vector<int> costs = vector<int>(airports.size(), INF);
+    vector<int> predecessor = vector<int>(airports.size(), -1);
+    vector<bool> visited = vector<bool>(airports.size(), false);
+
+    costs[from] = 0;
+    //make the minheap and add the first node to it.
+    priority_queue<pair<int,int>,vector<pair<int,int>>,djikComparator> minHeap;
+    minHeap.push(make_pair(from, 0));
+
+    while(!minHeap.empty()) {
+        //get and pop the top of the heap.
+        pair<int,int> cur = minHeap.top();
+        minHeap.pop();
+        if(visited[cur.first]) {
+            //if we have already visited this node, we can go to the next.
+            continue;
+        }
+        //set visited to true
+        visited[cur.first] = true;
+        //iterate through all of the current airport's outgoing flights
+        Airport& curPort = *airportVector[cur.first];
+        for(auto it : curPort) {
+            Flight& curFlight = it.second;
+            //id of the destination airport.
+            int next = airports[curFlight.getArrival()].getID();
+            int cost = costs[cur.first] + curFlight.getAverageFlightTime();
+            if(cur.first != from) {//if going from the origin, we don't add layover time.
+                cost += layoverTime;
+            }
+            if(cost < costs[next]) {
+                predecessor[next] = cur.first;
+                costs[next] = cost;
+                minHeap.push({next, cost});
+            }
+        }
+    }
+    //no path found.
+    if(predecessor[to] == -1) {
+        return path;
+    }
+    vector<int> stack;
+    stack.push_back(to);
+    while(to != from) {
+        to = predecessor[to];
+        stack.push_back(to);
+    }
+    for(int i = stack.size() - 1; i >= 0; i--) {
+        path.addToPath(airportVector[stack[i]]);
     }
     return path;
 }

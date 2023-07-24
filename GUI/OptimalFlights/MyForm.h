@@ -78,9 +78,6 @@ namespace OptimalFlights {
 				delete f_time;
 				f_time = nullptr;
 			}
-			if (rwl) {
-				delete rwl;
-			}
 		}
 	protected:
 		/// <summary>
@@ -102,6 +99,9 @@ namespace OptimalFlights {
 			if (graph != nullptr) {
 				delete graph;
 				graph = nullptr;
+			}
+			if (rwl) {
+				delete rwl;
 			}
 		}
 	//TODO: Add DirectedGraph as a member variable here.
@@ -177,6 +177,7 @@ namespace OptimalFlights {
 			// 
 			this->searchButton->BackColor = System::Drawing::SystemColors::ControlLightLight;
 			this->searchButton->Cursor = System::Windows::Forms::Cursors::Hand;
+			this->searchButton->Enabled = false;
 			this->searchButton->Location = System::Drawing::Point(385, 42);
 			this->searchButton->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
 			this->searchButton->Name = L"searchButton";
@@ -300,6 +301,7 @@ namespace OptimalFlights {
 			this->clearButton->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
 			this->clearButton->Name = L"clearButton";
 			this->clearButton->Size = System::Drawing::Size(97, 56);
+			this->clearButton->Enabled = false;
 			this->clearButton->TabIndex = 14;
 			this->clearButton->Text = L"Clear";
 			this->clearButton->UseVisualStyleBackColor = true;
@@ -357,6 +359,7 @@ namespace OptimalFlights {
 			// bkgdCodeLoader
 			// 
 			this->bkgdCodeLoader->DoWork += gcnew System::ComponentModel::DoWorkEventHandler(this, &MyForm::bkgdCodeLoader_DoWork);
+			this->bkgdCodeLoader->RunWorkerCompleted += gcnew System::ComponentModel::RunWorkerCompletedEventHandler(this, &MyForm::bkgdCodeLoader_RunWorkerCompleted);
 			// 
 			// fbd
 			// 
@@ -488,17 +491,18 @@ namespace OptimalFlights {
 	}
 
 	private: System::Void searchButton_Click(System::Object^ sender, System::EventArgs^ e) {
-
 		if (start->Text->Length != 3 || end->Text->Length != 3) {
 			this->invalidCodeLabel->Visible = true;
 			return;
 		}
 		//Notify user that it is loading.
+		searchButton->Enabled = false;
+		clearButton->Enabled = false;
 		resultList->Items->Clear();
 		cleanPaths();
 		resultList->Items->Add(L"Calculating shortest path from " + start->Text + L" to " + end->Text + L", please wait");
-		this->searchButton->BackColor = System::Drawing::SystemColors::ControlDark;
-		this->clearButton->BackColor = System::Drawing::SystemColors::ControlDark;
+		
+		
 		//***
 		//Start the BackgroundWorkers
 		dTimerStart();
@@ -586,7 +590,7 @@ private: System::Void bkgdWorkerDjik_DoWork(System::Object^ sender, System::Comp
 	std::chrono::duration<double> elapsed_seconds;
 	startTime = std::chrono::system_clock::now();
 	//TODO insert function here when finished
-	FlightPath result;// = graph->djikstraPath(origin, dest);
+	FlightPath result = graph->djikPath2(origin, dest);
 	endTime = std::chrono::system_clock::now();
 	elapsed_seconds = endTime - startTime;
 	timerDjikstra->Stop();
@@ -612,18 +616,18 @@ private: System::Void bkgdWorkerDjik_DoWork(System::Object^ sender, System::Comp
 private: System::Void bkgdWorkerFloyd_RunWorkerCompleted(System::Object^ sender, System::ComponentModel::RunWorkerCompletedEventArgs^ e) {
 	rwl->AcquireReaderLock(1);
 	if (resultList->Items->Count >= 7) {
-		this->searchButton->BackColor = System::Drawing::SystemColors::ControlLightLight;
-		this->clearButton->BackColor = System::Drawing::SystemColors::ControlLightLight;
 		resultList->Items->RemoveAt(0);
+		searchButton->Enabled = true;
+		clearButton->Enabled = true;
 	}
 	rwl->ReleaseReaderLock();
 }
 private: System::Void bkgdWorkerDjik_RunWorkerCompleted(System::Object^ sender, System::ComponentModel::RunWorkerCompletedEventArgs^ e) {
 	rwl->AcquireReaderLock(1);
 	if (resultList->Items->Count >= 7) {
-		this->searchButton->BackColor = System::Drawing::SystemColors::ControlLightLight;
-		this->clearButton->BackColor = System::Drawing::SystemColors::ControlLightLight;
 		resultList->Items->RemoveAt(0);
+		searchButton->Enabled = true;
+		clearButton->Enabled = true;
 	}
 	rwl->ReleaseReaderLock();
 }
@@ -643,17 +647,24 @@ private: System::Void bkgdCodeLoader_DoWork(System::Object^ sender, System::Comp
 private: System::Void chooseDataFolderToolStripMenuItem1_Click(System::Object^ sender, System::EventArgs^ e) {
 	fbd->ShowDialog();
 	folderLocation = fbd->SelectedPath;
-	while (bkgdCodeLoader->IsBusy) {
+	while (!searchButton->Enabled) {
 		Thread::Sleep(500);
 	}
 	airportList->Items->Clear();
 	airportList->Items->Add("loading...");
+	searchButton->Enabled = false;
+	clearButton->Enabled = false;
+	System::Drawing::SystemColors::ControlDark;
 	graph->clear();
 	bkgdCodeLoader->RunWorkerAsync();
 }
 //Signal to reset Floyd Warshall
 private: System::Void resetToolStripMenuItem_Click(System::Object^ sender, System::EventArgs^ e) {
 	graph->reset();
+}
+private: System::Void bkgdCodeLoader_RunWorkerCompleted(System::Object^ sender, System::ComponentModel::RunWorkerCompletedEventArgs^ e) {
+	searchButton->Enabled = true;
+	clearButton->Enabled = true;
 }
 };
 }

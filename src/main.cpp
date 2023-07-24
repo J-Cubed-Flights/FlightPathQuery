@@ -58,11 +58,18 @@ void test(string from, string to, DirectedGraph& flights) {
     start = std::chrono::system_clock::now();
     FlightPath result = flights.floydPath(from, to);
     elapsed_seconds = std::chrono::system_clock::now() - start;
-    cout << result.toString(true) << endl;
-    cout << "completed in " << elapsed_seconds.count() << "s\n";
+    cout << "Floyd Path: " << result.toString() << endl;
+    cout << "\tcompleted in " << elapsed_seconds.count() << "s\n";
 
-    result = flights.djikstraPath(from, to);
+//    start = std::chrono::system_clock::now();
+//    result = flights.djikstraPath(from, to);
+//    elapsed_seconds = std::chrono::system_clock::now() - start;
+//    cout << "Djik Path: " << result.toString(true) << endl;
+//    cout << "\tcompleted in " << elapsed_seconds.count() << "s\n";
+
+    start = std::chrono::system_clock::now();
+    result = flights.djikPath2(from, to);
     elapsed_seconds = std::chrono::system_clock::now() - start;
-    cout << result.toString(true) << endl;
-    cout << "completed in " << elapsed_seconds.count() << "s\n";
+    cout << "Djik Path MinHeap: " << result.toString() << endl;
+    cout << "\tcompleted in " << elapsed_seconds.count() << "s\n\n";
 }
