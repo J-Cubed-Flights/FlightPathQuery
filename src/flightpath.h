@@ -21,61 +21,78 @@ class FlightPath
 private:
     int totalFlightTime;
     vector<Airport*> stops;
+    const int layover = 120;
+    //determine if totalFlightTime needs to be updated next time it is called
+    bool update;
 public:
-    FlightPath() : totalFlightTime(0) {};
-    FlightPath(FlightPath& copy) : stops(copy.getStops()), totalFlightTime(copy.getFlightTime()) {};
+    //constructors
+    FlightPath() : totalFlightTime(0), update(false) {};
+    FlightPath(FlightPath& copy) : stops(copy.getStops()), totalFlightTime(copy.getFlightTime()),update(copy.update) {};
+
+    //operator
     FlightPath& operator=(const FlightPath& other) {
         totalFlightTime = other.totalFlightTime;
         stops = other.stops;
         return *this;
     }
-
+    //getters
     int getFlightTime();
     int getWithLayover();
-    string toString(bool withLayover);
-    string toString();
-    void addToPath(Airport* stop);
-    void addTime(int t);
     vector<Airport*> getStops();
+
+    //toString()
+    string toString(bool withLayover);
+    string toString(){return toString(true);}
+
+    //adding airport to path
+    void addToPath(Airport* stop);
+    void addToPath(Airport& stop);
 };
 
+//return the vector of airports in the path
 vector<Airport*> FlightPath::getStops() {
     return stops;
 }
-
-void FlightPath::addTime(int t) {
-    totalFlightTime += t;
-}
-
+//add an airport stop to the back of the path
 void FlightPath::addToPath(Airport* stop)  {
     stops.push_back(stop);
+    update = true;
 }
-
+//add an airport stop to the back of the path
+void FlightPath::addToPath(Airport& stop)  {
+    stops.push_back(&stop);
+    update = true;
+}
+//return the flight time
 int FlightPath::getFlightTime()
 {
-    totalFlightTime = 0;
-    for(int i = 1; i < stops.size(); i++) {
-        string s = stops[i]->getAirportCode();
-        totalFlightTime += stops[i - 1]->find(s)->second.getAverageFlightTime();
+    if (update) {
+        totalFlightTime = 0;
+        for (int i = 1; i < stops.size(); i++) {
+            string s = stops[i]->getAirportCode();
+            totalFlightTime += stops[i - 1]->find(s)->second.getAverageFlightTime();
+        }
+        update = false;
     }
     return totalFlightTime;
 }
-
+//return the flight time including layovers at each intermediate stop
 int FlightPath::getWithLayover()
 {
-    if (totalFlightTime < 0 || stops.size() == 0) {//if there is no flight path, then return -1;
-        return -1;
-    }// Here we are calculating total time with layovers in mind.
+    //if there is no flight path, then return 0
+    if (stops.size() == 0) {
+        return 0;
+    }
+    // Here we are calculating total time with layovers in mind.
     // Adding 2 hours aka 120 minutes per extra stop(excluding the origin and destination) to totalFlightTime.
     int totalWithLayover = getFlightTime();
     if(stops.size() > 2) {
-        totalWithLayover += 120 * (stops.size() - 2);
+        totalWithLayover += layover * (stops.size() - 2);
     }
     return totalWithLayover;
 }
-string FlightPath::toString() {
-    return toString(true);
-}
+
+//return a flight path as a string
 string FlightPath::toString(bool withLayover) {
     if(stops.size() == 0) {
         return "No flight path";
