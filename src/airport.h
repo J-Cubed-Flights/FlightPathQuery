@@ -41,7 +41,7 @@ public:
     bool isNull() {return name.length() == 0;}
 
     // setter
-    void setID(int id) {this->id = id;}
+    void setID(int newID) { this->id = newID;}
 
     // update Flight
     void updateFlight(string &arriveCode, int flightTime);
@@ -54,19 +54,19 @@ public:
     bool operator < (const Airport& a) {return airportCode < a.airportCode;}
     bool operator > (const Airport& a) {return airportCode > a.airportCode;}
 
-
     // for testing purposes
     vector<string> printFlights();
 };
 
 // print all outgoing flights
 vector<string> Airport::printFlights() {
-    vector<string> ss;
+    vector<string> outgoingFlights;
     for (auto it : flights) {
-        ss.push_back(it.second.getArrival() + " " + to_string(it.second.getAverageFlightTime()));
+        outgoingFlights.push_back(it.second.getArrival() + " " + to_string(it.second.getAverageFlightTime()));
     }
-    return ss;
+    return outgoingFlights;
 }
+
 // update a flight
 void Airport::updateFlight(string &arriveCode, int flightTime) {
     auto it = flights.find(arriveCode);
@@ -81,5 +81,6 @@ void Airport::updateFlight(string &arriveCode, int flightTime) {
         flights.emplace(arriveCode, newFlight);
     }
 }
+
 
 #endif //J_CUBED_FLIGHTS_AIRPORT_H

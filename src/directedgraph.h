@@ -16,6 +16,7 @@
 
 using namespace std;
 
+
 class DirectedGraph {
 private:
     const int INF = INT_MAX;
@@ -83,13 +84,13 @@ public:
 
     //// Path finding algorithms
     // generate the shortest paths using floyd warshall algorithm
-    FlightPath floydPath(std::string &origin, std::string &destination);
+    FlightPath floydPath(string &origin, string &destination);
 
     // generate the shortest path as a vector using Djikstra's algorithm
-    FlightPath djikstraPath(string &originCode, string &destinationCode);
+    FlightPath djikstraVectorPath(string &originCode, string &destinationCode);
 
     // generate the shortest path with Djikstra's algorithm using a minHeap.
-    FlightPath djikPath2(string &originCode, string &destinationCode);
+    FlightPath djikstraMinHeapPath(string &originCode, string &destinationCode);
     // Parse data from file locations and puts it into the graph
     // airportFile is used to get the IATA code and Airport name
     // flightFile is used to get the individual flights
@@ -97,8 +98,8 @@ public:
 };
 
 // generate the shortest path
-FlightPath DirectedGraph::djikstraPath(string &originCode, string &destinationCode) {
-    FlightPath path = FlightPath();
+FlightPath DirectedGraph::djikstraVectorPath(string &originCode, string &destinationCode) {
+    FlightPath path;
     if (!validCode(originCode) || !validCode(destinationCode)) {
         return path;
     }
@@ -110,27 +111,29 @@ FlightPath DirectedGraph::djikstraPath(string &originCode, string &destinationCo
     unordered_map<string, int> flight_time;
     unordered_map<string, string> predecessor;
 
-    //Initialize variables
+    // Initialize variables
     for (auto AirportIt = airports.begin(); AirportIt != airports.end(); AirportIt++) {
         // Adding all vertexes
         unvisited.emplace(AirportIt->first);
 
-        //Adding all predecessors
-        if (AirportIt->first == originCode)
+        // Adding all predecessors
+        if (AirportIt->first == originCode) {
             predecessor[AirportIt->first] = "NULL";
-        else
+        } else {
             predecessor[AirportIt->first] = originCode;
+        }
 
-        //Adding weights, if original 0; if no edge setting to -1; if edge set to weight
-        if (AirportIt->first == originCode)
+        // Adding weights, if original 0; if no edge setting to -1; if edge set to weight
+        if (AirportIt->first == originCode) {
             flight_time[AirportIt->first] = 0;
-        else if (airports[originCode].find(AirportIt->first) == airports[originCode].end())
+        } else if (airports[originCode].find(AirportIt->first) == airports[originCode].end()) {
             flight_time[AirportIt->first] = INF;
-        else
+        } else {
             flight_time[AirportIt->first] = airports[originCode][AirportIt->first].getAverageFlightTime();
+        }
     }
 
-    //Used in while loop
+    // Used in while loop
     Airport current_airport = airports[originCode];
     string shortest_flight;
     int path_time = 0;
@@ -205,14 +208,13 @@ void DirectedGraph::generateAirportIDs() {
         return;
     }
     airportVector.clear();
-    for(auto it = airports.begin(); it != airports.end(); it++)
-    {
+    for (auto it = airports.begin(); it != airports.end(); it++) {
         Airport* cur = &(it->second);
         airportVector.push_back(cur);
     }
     quickSort(airportVector, 0, airportVector.size() - 1);
     // Assign each airport an ID (it's index).
-    for(int i = 0; i < airportVector.size(); i++) {
+    for (int i = 0; i < airportVector.size(); i++) {
         airportVector[i]->setID(i);
     }
 }
@@ -220,19 +222,19 @@ void DirectedGraph::generateAirportIDs() {
 // sorts the vector by airport code.
 void DirectedGraph::quickSort(vector<Airport*> &arr, int l, int r) {
     // we will have the first index be the pivot.
-    if(l >= r) {
+    if (l >= r) {
         return;
     }
     int pivotI = l++;
     int end = r;
-    while(l <= r) {
-        while(l <= r && arr[l]->getAirportCode() < arr[pivotI]->getAirportCode()) {
+    while (l <= r) {
+        while (l <= r && arr[l]->getAirportCode() < arr[pivotI]->getAirportCode()) {
             l++;
         }
-        while(l <= r && arr[r]->getAirportCode() >= arr[pivotI]->getAirportCode()) {
+        while (l <= r && arr[r]->getAirportCode() >= arr[pivotI]->getAirportCode()) {
             r--;
         }
-        if(l < r && arr[l]->getAirportCode() >= arr[pivotI]->getAirportCode() && arr[pivotI]->getAirportCode() > arr[r]->getAirportCode()) {
+        if (l < r && arr[l]->getAirportCode() >= arr[pivotI]->getAirportCode() && arr[pivotI]->getAirportCode() > arr[r]->getAirportCode()) {
             // swap
             Airport* temp = arr[l];
             arr[l] = arr[r];
@@ -352,16 +354,14 @@ void DirectedGraph::parseData(string airportFile, string flightFile) {
     // first, get all the airport iata values and their corresponding names.
     unordered_map<string, string> airportNames;
     fstream file (airportFile);
-    if (file.is_open())
-    {
+    if (file.is_open()) {
         // skip the first line, since it is the column names.
         string line;
         getline(file, line);
         // while the lines exist
-        while (getline(file, line))
-        {
+        while (getline(file, line)) {
             stringstream str(line);
-            //g et the iata and airport strings
+            // get the iata and airport strings
             string iata, airport;
             getline(str, iata, ',');
             getline(str, airport, ',');
@@ -374,15 +374,13 @@ void DirectedGraph::parseData(string airportFile, string flightFile) {
     }
     // now open the flights file to start adding flights to the graph
     file.open(flightFile);
-    if (file.is_open())
-    {
+    if (file.is_open()) {
         string line;
         vector<string> row;
         // skip first line (column names)
         getline(file, line);
         // while the lines exist
-        while (getline(file, line))
-        {
+        while (getline(file, line)) {
             row.clear();
             string word;
             stringstream str(line);
@@ -409,8 +407,8 @@ void DirectedGraph::parseData(string airportFile, string flightFile) {
 }
 
 // generate the shortest paths using floyd warshall algorithm
-FlightPath DirectedGraph::floydPath(std::string &origin, std::string &destination) {
-
+FlightPath DirectedGraph::floydPath(string &origin, string &destination) {
+    // FlightPath object to return
     FlightPath path;
 
     // if the origin or destination don't exist as valid airports, then return NULL
@@ -444,7 +442,7 @@ FlightPath DirectedGraph::floydPath(std::string &origin, std::string &destinatio
     return path;
 }
 
-FlightPath DirectedGraph::djikPath2(string &originCode, string &destinationCode) {
+FlightPath DirectedGraph::djikstraMinHeapPath(string &originCode, string &destinationCode) {
     FlightPath path;
     if (!validCode(originCode) || !validCode(destinationCode)) {
         return path;
@@ -508,5 +506,6 @@ FlightPath DirectedGraph::djikPath2(string &originCode, string &destinationCode)
     }
     return path;
 }
+
 
 #endif //J_CUBED_FLIGHTS_DIRECTEDGRAPH_H

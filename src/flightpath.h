@@ -4,6 +4,10 @@
 #define J_CUBED_FLIGHTS_LAYOVERPATH_H
 
 
+#include "airport.h"
+#include "flight.h"
+#include "directedgraph.h"
+
 #include <vector>
 #include <string>
 #include <unordered_map>
@@ -11,34 +15,31 @@
 #include <queue>
 #include <sstream>
 
-#include "airport.h"
-#include "flight.h"
-#include "directedgraph.h"
-
 using namespace std;
 
 
 class FlightPath {
 private:
-    int totalFlightTime;
+    int flightTimeNoLayover;
+    int flightTimeWithLayover;
     vector<Airport*> stops;
     const int layover = 120;
 
 public:
     // constructors
-    FlightPath() : totalFlightTime(0) {};
-    FlightPath(FlightPath& copy) : stops(copy.getStops()), totalFlightTime(copy.getFlightTime()) {};
+    FlightPath() : flightTimeNoLayover(0), flightTimeWithLayover(0) {};
+    FlightPath(const FlightPath& copy) : stops(copy.getStops()), flightTimeNoLayover(copy.getFlightTimeNoLayover()) {};
 
     // operator
     FlightPath& operator=(const FlightPath& other) {
-        totalFlightTime = other.totalFlightTime;
+        flightTimeNoLayover = other.flightTimeNoLayover;
         stops = other.stops;
         return *this;
     }
     // getters
-    int getFlightTime();
-    int getWithLayover();
-    vector<Airport*> getStops();
+    int getFlightTimeNoLayover() const {return flightTimeNoLayover;};
+    int getFlightTimeWithLayover() const {return flightTimeWithLayover;}
+    const vector<Airport*>& getStops() const {return stops;}  // return the vector of airports in the path
 
     // toString()
     string toString(bool withLayover);
@@ -49,42 +50,23 @@ public:
     void addToPath(Airport& stop);
 };
 
-// return the vector of airports in the path
-vector<Airport*> FlightPath::getStops() {
-    return stops;
-}
 
 // add an airport stop to the back of the path
 void FlightPath::addToPath(Airport* stop)  {
+    if (!stops.empty()) {
+        string fromAirport = stops.back()->getAirportCode();
+        string to = stop->getAirportCode();
+        int flightTime = stop->find(fromAirport)->second.getAverageFlightTime();
+
+        flightTimeNoLayover += flightTime;
+        flightTimeWithLayover += flightTime;
+
+        // if there are 2 or more airports already in the path, then layover penalty is necessary
+        if (stops.size() >= 2) {
+            flightTimeWithLayover += layover;
+        }
+    }
     stops.push_back(stop);
-}
-
-// add an airport stop to the back of the path
-void FlightPath::addToPath(Airport& stop)  {
-    stops.push_back(&stop);
-}
-
-// return the flight time
-int FlightPath::getFlightTime()
-{
-    totalFlightTime = 0;
-    for (int i = 1; i < stops.size(); i++) {
-        string s = stops[i]->getAirportCode();
-        totalFlightTime += stops[i - 1]->find(s)->second.getAverageFlightTime();
-    }
-    return totalFlightTime;
-}
-
-// return the flight time including layovers at each intermediate stop
-int FlightPath::getWithLayover()
-{
-    // Here we are calculating total time with layovers in mind.
-    // Adding 2 hours aka 120 minutes per extra stop(excluding the origin and destination) to totalFlightTime.
-    int totalWithLayover = getFlightTime();
-    if (stops.size() > 2) {
-        totalWithLayover += layover * (stops.size() - 2);
-    }
-    return totalWithLayover;
 }
 
 // return a flight path as a string
@@ -101,9 +83,9 @@ string FlightPath::toString(bool withLayover) {
         }
     }
     if (withLayover) {
-        sstr << " (Average total time: " << getWithLayover() << " minutes)";
+        sstr << " (Average total time: " << getFlightTimeWithLayover() << " minutes)";
     } else {
-        sstr << " (Average total time: " << getFlightTime() << " minutes)";
+        sstr << " (Average total time: " << getFlightTimeNoLayover() << " minutes)";
     }
     return sstr.str();
 }
