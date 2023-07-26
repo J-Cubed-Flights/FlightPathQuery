@@ -47,7 +47,7 @@ public:
 
     // adding airport to path
     void addToPath(Airport* stop);
-    void addToPath(Airport& stop);
+    void addToPath(Airport& stop) {addToPath(&stop);}
 };
 
 
