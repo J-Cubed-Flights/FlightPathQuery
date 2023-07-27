@@ -58,7 +58,7 @@ void mainDriver() {
     cout << "size: " << flightGraph.size() << endl;
 
     string testFromAirport = "ABE";
-    string testToAirport = "ABE";
+    string testToAirport = "ABI";
 
     testFloydPath(testFromAirport, testToAirport, flightGraph);
     testDijkstraMinHeap(testFromAirport, testToAirport, flightGraph);
@@ -68,25 +68,26 @@ void mainDriver() {
 void testFloydPath(string from, string to, DirectedGraph flights) {
     auto start = chrono::system_clock::now();
     FlightPath result = flights.floydPath(from, to);
-    auto elapsed_seconds = chrono::system_clock::now() - start;
+    auto elapsed_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start);
 
     cout << "Floyd Path: " << result.toString() << endl;
-    cout << "\tcompleted in " << elapsed_seconds.count() << "s\n";
+    cout << "\tcompleted in " << elapsed_seconds.count() << "ms\n\n";
 }
 
 void testDijkstraMinHeap(string from, string to, DirectedGraph flights) {
     auto start = std::chrono::system_clock::now();
     FlightPath result = flights.djikstraMinHeapPath(from, to);
-    auto elapsed_seconds = chrono::system_clock::now() - start;
+    auto elapsed_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start);
 
     cout << "Dijkstra Path MinHeap: " << result.toString() << endl;
-    cout << "\tcompleted in " << elapsed_seconds.count() << "s\n\n";
+    cout << "\tcompleted in " << elapsed_seconds.count() << "ms\n\n";
 }
 
 void testDijkstraVector(string from, string to, DirectedGraph flights) {
     auto start = std::chrono::system_clock::now();
     FlightPath result = flights.djikstraVectorPath(from, to);
-    auto elapsed_seconds = std::chrono::system_clock::now() - start;
+    auto elapsed_seconds = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - start);
+
     cout << "Dijkstra Path Vector: " << result.toString(true) << endl;
-    cout << "\tcompleted in " << elapsed_seconds.count() << "s\n\n";
+    cout << "\tcompleted in " << elapsed_seconds.count() << "ms\n\n";
 }

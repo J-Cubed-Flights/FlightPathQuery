@@ -28,11 +28,14 @@ private:
 public:
     // constructors
     FlightPath() : flightTimeNoLayover(0), flightTimeWithLayover(0) {};
-    FlightPath(const FlightPath& copy) : stops(copy.getStops()), flightTimeNoLayover(copy.getFlightTimeNoLayover()) {};
+    FlightPath(const FlightPath& copy) : stops(copy.getStops()),
+                             flightTimeNoLayover(copy.flightTimeNoLayover),
+                             flightTimeWithLayover(copy.flightTimeWithLayover) {};
 
     // operator
     FlightPath& operator=(const FlightPath& other) {
         flightTimeNoLayover = other.flightTimeNoLayover;
+        flightTimeWithLayover = other.flightTimeWithLayover;
         stops = other.stops;
         return *this;
     }

@@ -574,6 +574,7 @@ private: System::Windows::Forms::Timer^ timerRuntime;
 	private: System::Void clearButton_Click(System::Object^ sender, System::EventArgs^ e) {
 		dHeapTime->Text = L"---------";
 		fTime->Text = L"---------";
+		dTime->Text = L"---------";
 		resultList->Items->Clear();
 		cleanPaths();
 		resultList->Items->Add(L"Results appear here");
@@ -584,9 +585,9 @@ private: System::Void timer_Tick(System::Object^ sender, System::EventArgs^ e) {
 	TimeSpan cur = DateTime::Now.Subtract(startTime);
 	String^ strTime;
 	if (cur.TotalSeconds > 60) {
-		 strTime = System::Convert::ToString(Math::Floor(cur.TotalMinutes)) + "m " + System::Convert::ToString(Math::Round(cur.TotalSeconds - Math::Floor(cur.TotalMinutes) * 60, 0)) + "s";
+		 strTime = System::Convert::ToString(Math::Floor(cur.TotalMinutes)) + " m " + System::Convert::ToString(Math::Round(cur.TotalSeconds - Math::Floor(cur.TotalMinutes) * 60, 0)) + "s";
 	} else {
-		strTime = System::Convert::ToString(Math::Round(cur.TotalSeconds, 2)) + "s";
+		strTime = System::Convert::ToString(Math::Round(cur.TotalSeconds, 2)) + " s";
 	}
 	bool updated = false;
 	if (dHeapRunning) {
@@ -614,16 +615,27 @@ private: System::Void bkgdFloyd_DoWork(System::Object^ sender, System::Component
 	std::string origin = context.marshal_as<std::string>(start->Text);
 	std::string dest = context.marshal_as<std::string>(end->Text);
 
-	std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-	std::chrono::duration<double> elapsed_seconds;
-	startTime = std::chrono::system_clock::now();
+	//Time how long it takes to get the path.
+	DateTime startTime = DateTime::Now;
 	FlightPath result = graph->floydPath(origin, dest);
-	endTime = std::chrono::system_clock::now();
-	elapsed_seconds = endTime - startTime;
+	TimeSpan cur = DateTime::Now.Subtract(startTime);
+	String^ strTime;
 
+	// tell the timer that Floyd is done running
 	fRunning = false;
-	f_time = elapsed_seconds.count().ToString() + L"s";
+
+	//parse and generate time to be output
+	if (cur.TotalMilliseconds > 1000) {
+		strTime = System::Convert::ToString(Math::Round(cur.TotalSeconds, 3)) + " s";
+	}
+	else {
+		strTime = System::Convert::ToString(Math::Round(cur.TotalMilliseconds, 3)) + " ms";
+	}
+
+	Sleep(100);
+	f_time = strTime;
 	
+	//push results into the list
 	fTime->Invoke(gcnew Action(this, &MyForm::displayFloydTime));
 
 	//Add results to list
@@ -639,24 +651,67 @@ private: System::Void bkgdDjikHeap_DoWork(System::Object^ sender, System::Compon
 	std::string origin = context.marshal_as<std::string>(start->Text);
 	std::string dest = context.marshal_as<std::string>(end->Text);
 
-	std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-	std::chrono::duration<double> elapsed_seconds;
-	startTime = std::chrono::system_clock::now();
+	//Time how long it takes to get the path.
+	DateTime startTime = DateTime::Now;
 	FlightPath result = graph->djikstraMinHeapPath(origin, dest);
-	endTime = std::chrono::system_clock::now();
-	elapsed_seconds = endTime - startTime;
-	
-	dHeapRunning = false;
-	dHeap_time = elapsed_seconds.count().ToString() + L"s";
+	TimeSpan cur = DateTime::Now.Subtract(startTime);
+	String^ strTime;
 
-	dTime->Invoke(gcnew Action(this, &MyForm::displayDjikstraMinHeapTime));
+	// tell the timer that Djikstra MinHeap is done running
+	dHeapRunning = false;
+
+	//parse and generate time to be output
+	if (cur.TotalMilliseconds > 1000) {
+		strTime = System::Convert::ToString(Math::Round(cur.TotalSeconds, 3)) + " s";
+	}
+	else {
+		strTime = System::Convert::ToString(Math::Round(cur.TotalMilliseconds, 3)) + " ms";
+	}
+
+	Sleep(100);
+	dHeap_time = strTime;
+
 	//push results into the list
+	dTime->Invoke(gcnew Action(this, &MyForm::displayDjikstraMinHeapTime));
 
 	dHeap_path = gcnew String(result.toString().c_str());
 	
 	resultList->Invoke(gcnew Action(this, &MyForm::displayDjikstraMinHeap));
 
 }
+private: System::Void bkgdDjik_DoWork(System::Object^ sender, System::ComponentModel::DoWorkEventArgs^ e) {
+	//Convert to std strings
+	msclr::interop::marshal_context context;
+	std::string origin = context.marshal_as<std::string>(start->Text);
+	std::string dest = context.marshal_as<std::string>(end->Text);
+
+	//Time how long it takes to get the path.
+	DateTime startTime = DateTime::Now;
+	FlightPath result = graph->djikstraVectorPath(origin, dest);
+	TimeSpan cur = DateTime::Now.Subtract(startTime);
+	String^ strTime;
+
+	// tell the timer that Djikstra Standard is done running
+	dRunning = false;
+
+	//parse and generate time to be output
+	if (cur.TotalMilliseconds > 1000) {
+		strTime = System::Convert::ToString(Math::Round(cur.TotalSeconds, 3)) + " s";
+	}
+	else {
+		strTime = System::Convert::ToString(Math::Round(cur.TotalMilliseconds, 3)) + " ms";
+	}
+
+	Sleep(100);
+	d_time = strTime;
+	dTime->Invoke(gcnew Action(this, &MyForm::displayDjikstraTime));
+	//push results into the list
+
+	d_path = gcnew String(result.toString().c_str());
+
+	resultList->Invoke(gcnew Action(this, &MyForm::displayDjikstra));
+}
+
 private: System::Void bkgdCodeLoader_DoWork(System::Object^ sender, System::ComponentModel::DoWorkEventArgs^ e) {
 	msclr::interop::marshal_context context;
 	std::string folder = context.marshal_as<std::string>(folderLocation);
@@ -692,27 +747,6 @@ private: System::Void bkgdCodeLoader_RunWorkerCompleted(System::Object^ sender, 
 	searchButton->Enabled = true;
 	clearButton->Enabled = true;
 }
-private: System::Void bkgdDjik_DoWork(System::Object^ sender, System::ComponentModel::DoWorkEventArgs^ e) {
-	//Convert to std strings
-	msclr::interop::marshal_context context;
-	std::string origin = context.marshal_as<std::string>(start->Text);
-	std::string dest = context.marshal_as<std::string>(end->Text);
 
-	std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
-	std::chrono::duration<double> elapsed_seconds;
-	startTime = std::chrono::system_clock::now();
-	FlightPath result = FlightPath(); //graph->djikstraPath(origin, dest);
-	endTime = std::chrono::system_clock::now();
-	elapsed_seconds = endTime - startTime;
-
-	dRunning = false;
-	d_time = elapsed_seconds.count().ToString() + L"s";
-	dTime->Invoke(gcnew Action(this, &MyForm::displayDjikstraTime));
-	//push results into the list
-
-	d_path = gcnew String(result.toString().c_str());
-
-	resultList->Invoke(gcnew Action(this, &MyForm::displayDjikstra));
-}
 };
 }
