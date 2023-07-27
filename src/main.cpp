@@ -58,7 +58,7 @@ void mainDriver() {
     cout << "size: " << flightGraph.size() << endl;
 
     string testFromAirport = "ABE";
-    string testToAirport = "ACT";
+    string testToAirport = "ABE";
 
     testFloydPath(testFromAirport, testToAirport, flightGraph);
     testDijkstraMinHeap(testFromAirport, testToAirport, flightGraph);

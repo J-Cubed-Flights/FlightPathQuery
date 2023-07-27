@@ -25,15 +25,20 @@ namespace OptimalFlights {
 	private:
 		DirectedGraph* graph;
 		cliext::vector<String ^>^ strs;
-		String^ d_path;
-		String^ d_time;
+		String^ dHeap_path;
+		String^ dHeap_time;
 		String^ f_path;
 		String^ f_time;
+		String^ d_path;
+		String^ d_time;
 		String^ folderLocation;
-		DateTime dStartTime;
-		DateTime fwStartTime;
+		bool dHeapRunning;
+		bool fRunning;
+		bool dRunning;
+		DateTime startTime;
 		ReaderWriterLock^ rwl;
-	private: System::ComponentModel::BackgroundWorker^ bkgdWorkerFloyd;
+	private: System::ComponentModel::BackgroundWorker^ bkgdFloyd;
+
 	private: System::Windows::Forms::MenuStrip^ menuStrip1;
 	private: System::Windows::Forms::ToolStripMenuItem^ optionsToolStripMenuItem;
 	private: System::Windows::Forms::ToolStripMenuItem^ chooseDataFolderToolStripMenuItem1;
@@ -44,7 +49,12 @@ namespace OptimalFlights {
 
 	private: System::Windows::Forms::FolderBrowserDialog^ fbd;
 	private: System::ComponentModel::BackgroundWorker^ bkgdCodeLoader;
-	private: System::ComponentModel::BackgroundWorker^ bkgdWorkerDjik;
+	private: System::Windows::Forms::Label^ label1;
+	private: System::Windows::Forms::Label^ dHeapTime;
+	private: System::ComponentModel::BackgroundWorker^ bkgdDjik;
+	private: System::ComponentModel::BackgroundWorker^ bkgdDjikHeap;
+
+
 
 
 	public:
@@ -54,21 +64,30 @@ namespace OptimalFlights {
 			strs = gcnew cliext::vector<String^>();
 			graph = new DirectedGraph();
 			rwl = gcnew ReaderWriterLock();
-			d_path = nullptr;
+
+			fRunning = false;
+			dRunning = false;
+			dHeapRunning = false;
+
+			dHeap_path = nullptr;
+			dHeap_time = nullptr;
+
 			f_path = nullptr;
-			d_time = nullptr;
 			f_time = nullptr;			
+
+			d_path = nullptr;
+			d_time = nullptr;
 			InitializeComponent();
 		}
 	private:
 		void cleanPaths() {
-			if (d_path) {
-				delete d_path;
-				d_path = nullptr;
+			if (dHeap_path) {
+				delete dHeap_path;
+				dHeap_path = nullptr;
 			}
-			if (d_time) {
-				delete d_time;
-				d_time = nullptr;
+			if (dHeap_time) {
+				delete dHeap_time;
+				dHeap_time = nullptr;
 			}
 			if (f_path) {
 				delete f_path;
@@ -77,6 +96,14 @@ namespace OptimalFlights {
 			if (f_time) {
 				delete f_time;
 				f_time = nullptr;
+			}
+			if (d_path) {
+				delete d_path;
+				d_path = nullptr;
+			}
+			if (d_time) {
+				delete d_time;
+				d_time = nullptr;
 			}
 		}
 	protected:
@@ -113,6 +140,8 @@ namespace OptimalFlights {
 	private: System::Windows::Forms::ListBox^ resultList;
 	private: System::Windows::Forms::Label^ DjikstraText;
 	private: System::Windows::Forms::Label^ dTime;
+
+
 	private: System::Windows::Forms::Label^ floydText;
 	private: System::Windows::Forms::Label^ fTime;
 
@@ -124,8 +153,9 @@ namespace OptimalFlights {
 
 	private: System::Windows::Forms::Label^ airportTitle;
 	private: System::Windows::Forms::Label^ invalidCodeLabel;
-	private: System::Windows::Forms::Timer^ timerDjikstra;
-	private: System::Windows::Forms::Timer^ timerFloyd;
+private: System::Windows::Forms::Timer^ timerRuntime;
+
+
 
 	private: System::ComponentModel::IContainer^ components;
 
@@ -160,16 +190,18 @@ namespace OptimalFlights {
 			this->airportList = (gcnew System::Windows::Forms::ListBox());
 			this->airportTitle = (gcnew System::Windows::Forms::Label());
 			this->invalidCodeLabel = (gcnew System::Windows::Forms::Label());
-			this->timerDjikstra = (gcnew System::Windows::Forms::Timer(this->components));
-			this->timerFloyd = (gcnew System::Windows::Forms::Timer(this->components));
-			this->bkgdWorkerDjik = (gcnew System::ComponentModel::BackgroundWorker());
-			this->bkgdWorkerFloyd = (gcnew System::ComponentModel::BackgroundWorker());
+			this->timerRuntime = (gcnew System::Windows::Forms::Timer(this->components));
+			this->bkgdDjikHeap = (gcnew System::ComponentModel::BackgroundWorker());
+			this->bkgdFloyd = (gcnew System::ComponentModel::BackgroundWorker());
 			this->bkgdCodeLoader = (gcnew System::ComponentModel::BackgroundWorker());
 			this->fbd = (gcnew System::Windows::Forms::FolderBrowserDialog());
 			this->menuStrip1 = (gcnew System::Windows::Forms::MenuStrip());
 			this->optionsToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->chooseDataFolderToolStripMenuItem1 = (gcnew System::Windows::Forms::ToolStripMenuItem());
 			this->resetToolStripMenuItem = (gcnew System::Windows::Forms::ToolStripMenuItem());
+			this->label1 = (gcnew System::Windows::Forms::Label());
+			this->dHeapTime = (gcnew System::Windows::Forms::Label());
+			this->bkgdDjik = (gcnew System::ComponentModel::BackgroundWorker());
 			this->menuStrip1->SuspendLayout();
 			this->SuspendLayout();
 			// 
@@ -229,7 +261,7 @@ namespace OptimalFlights {
 			this->resultList->HorizontalScrollbar = true;
 			this->resultList->ItemHeight = 20;
 			this->resultList->Items->AddRange(gcnew cli::array< System::Object^  >(1) { L"Results appear here" });
-			this->resultList->Location = System::Drawing::Point(13, 181);
+			this->resultList->Location = System::Drawing::Point(12, 204);
 			this->resultList->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
 			this->resultList->Name = L"resultList";
 			this->resultList->Size = System::Drawing::Size(545, 364);
@@ -239,16 +271,16 @@ namespace OptimalFlights {
 			// 
 			this->DjikstraText->AutoSize = true;
 			this->DjikstraText->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 12));
-			this->DjikstraText->Location = System::Drawing::Point(655, 71);
+			this->DjikstraText->Location = System::Drawing::Point(564, 91);
 			this->DjikstraText->Name = L"DjikstraText";
-			this->DjikstraText->Size = System::Drawing::Size(76, 25);
+			this->DjikstraText->Size = System::Drawing::Size(174, 25);
 			this->DjikstraText->TabIndex = 6;
-			this->DjikstraText->Text = L"Djikstra";
+			this->DjikstraText->Text = L"Djikstra (MinHeap)";
 			// 
 			// dTime
 			// 
 			this->dTime->AutoSize = true;
-			this->dTime->Location = System::Drawing::Point(777, 80);
+			this->dTime->Location = System::Drawing::Point(744, 61);
 			this->dTime->Name = L"dTime";
 			this->dTime->Size = System::Drawing::Size(63, 20);
 			this->dTime->TabIndex = 9;
@@ -258,7 +290,7 @@ namespace OptimalFlights {
 			// 
 			this->floydText->AutoSize = true;
 			this->floydText->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 12));
-			this->floydText->Location = System::Drawing::Point(599, 115);
+			this->floydText->Location = System::Drawing::Point(596, 124);
 			this->floydText->Name = L"floydText";
 			this->floydText->Size = System::Drawing::Size(142, 25);
 			this->floydText->TabIndex = 10;
@@ -267,7 +299,7 @@ namespace OptimalFlights {
 			// fTime
 			// 
 			this->fTime->AutoSize = true;
-			this->fTime->Location = System::Drawing::Point(777, 124);
+			this->fTime->Location = System::Drawing::Point(744, 128);
 			this->fTime->Name = L"fTime";
 			this->fTime->Size = System::Drawing::Size(63, 20);
 			this->fTime->TabIndex = 11;
@@ -277,7 +309,7 @@ namespace OptimalFlights {
 			// 
 			this->resultText->AutoSize = true;
 			this->resultText->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 10.8F));
-			this->resultText->Location = System::Drawing::Point(12, 150);
+			this->resultText->Location = System::Drawing::Point(12, 173);
 			this->resultText->Name = L"resultText";
 			this->resultText->Size = System::Drawing::Size(75, 22);
 			this->resultText->TabIndex = 12;
@@ -297,11 +329,11 @@ namespace OptimalFlights {
 			// clearButton
 			// 
 			this->clearButton->Cursor = System::Windows::Forms::Cursors::Hand;
+			this->clearButton->Enabled = false;
 			this->clearButton->Location = System::Drawing::Point(385, 106);
 			this->clearButton->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
 			this->clearButton->Name = L"clearButton";
 			this->clearButton->Size = System::Drawing::Size(97, 56);
-			this->clearButton->Enabled = false;
 			this->clearButton->TabIndex = 14;
 			this->clearButton->Text = L"Clear";
 			this->clearButton->UseVisualStyleBackColor = true;
@@ -311,7 +343,7 @@ namespace OptimalFlights {
 			// 
 			this->airportList->FormattingEnabled = true;
 			this->airportList->ItemHeight = 20;
-			this->airportList->Location = System::Drawing::Point(573, 181);
+			this->airportList->Location = System::Drawing::Point(572, 204);
 			this->airportList->Margin = System::Windows::Forms::Padding(3, 4, 3, 4);
 			this->airportList->Name = L"airportList";
 			this->airportList->Size = System::Drawing::Size(317, 364);
@@ -321,7 +353,7 @@ namespace OptimalFlights {
 			// 
 			this->airportTitle->AutoSize = true;
 			this->airportTitle->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 10.8F));
-			this->airportTitle->Location = System::Drawing::Point(569, 150);
+			this->airportTitle->Location = System::Drawing::Point(568, 173);
 			this->airportTitle->Name = L"airportTitle";
 			this->airportTitle->Size = System::Drawing::Size(125, 22);
 			this->airportTitle->TabIndex = 16;
@@ -338,23 +370,17 @@ namespace OptimalFlights {
 			this->invalidCodeLabel->Text = L"Please input valid airport codes";
 			this->invalidCodeLabel->Visible = false;
 			// 
-			// timerDjikstra
+			// timerRuntime
 			// 
-			this->timerDjikstra->Tick += gcnew System::EventHandler(this, &MyForm::timerDjikstra_Tick);
+			this->timerRuntime->Tick += gcnew System::EventHandler(this, &MyForm::timer_Tick);
 			// 
-			// timerFloyd
+			// bkgdDjikHeap
 			// 
-			this->timerFloyd->Tick += gcnew System::EventHandler(this, &MyForm::timerFloyd_Tick);
+			this->bkgdDjikHeap->DoWork += gcnew System::ComponentModel::DoWorkEventHandler(this, &MyForm::bkgdDjikHeap_DoWork);
 			// 
-			// bkgdWorkerDjik
+			// bkgdFloyd
 			// 
-			this->bkgdWorkerDjik->DoWork += gcnew System::ComponentModel::DoWorkEventHandler(this, &MyForm::bkgdWorkerDjik_DoWork);
-			this->bkgdWorkerDjik->RunWorkerCompleted += gcnew System::ComponentModel::RunWorkerCompletedEventHandler(this, &MyForm::bkgdWorkerDjik_RunWorkerCompleted);
-			// 
-			// bkgdWorkerFloyd
-			// 
-			this->bkgdWorkerFloyd->DoWork += gcnew System::ComponentModel::DoWorkEventHandler(this, &MyForm::bkgdWorkerFloyd_DoWork);
-			this->bkgdWorkerFloyd->RunWorkerCompleted += gcnew System::ComponentModel::RunWorkerCompletedEventHandler(this, &MyForm::bkgdWorkerFloyd_RunWorkerCompleted);
+			this->bkgdFloyd->DoWork += gcnew System::ComponentModel::DoWorkEventHandler(this, &MyForm::bkgdFloyd_DoWork);
 			// 
 			// bkgdCodeLoader
 			// 
@@ -401,11 +427,36 @@ namespace OptimalFlights {
 			this->resetToolStripMenuItem->Text = L"Reset";
 			this->resetToolStripMenuItem->Click += gcnew System::EventHandler(this, &MyForm::resetToolStripMenuItem_Click);
 			// 
+			// label1
+			// 
+			this->label1->AutoSize = true;
+			this->label1->Font = (gcnew System::Drawing::Font(L"Microsoft Sans Serif", 12));
+			this->label1->Location = System::Drawing::Point(563, 56);
+			this->label1->Name = L"label1";
+			this->label1->Size = System::Drawing::Size(175, 25);
+			this->label1->TabIndex = 19;
+			this->label1->Text = L"Djikstra (Standard)";
+			// 
+			// dHeapTime
+			// 
+			this->dHeapTime->AutoSize = true;
+			this->dHeapTime->Location = System::Drawing::Point(744, 95);
+			this->dHeapTime->Name = L"dHeapTime";
+			this->dHeapTime->Size = System::Drawing::Size(63, 20);
+			this->dHeapTime->TabIndex = 20;
+			this->dHeapTime->Text = L"---------";
+			// 
+			// bkgdDjik
+			// 
+			this->bkgdDjik->DoWork += gcnew System::ComponentModel::DoWorkEventHandler(this, &MyForm::bkgdDjik_DoWork);
+			// 
 			// MyForm
 			// 
 			this->AutoScaleDimensions = System::Drawing::SizeF(8, 20);
 			this->AutoScaleMode = System::Windows::Forms::AutoScaleMode::Font;
-			this->ClientSize = System::Drawing::Size(902, 565);
+			this->ClientSize = System::Drawing::Size(902, 591);
+			this->Controls->Add(this->dHeapTime);
+			this->Controls->Add(this->label1);
 			this->Controls->Add(this->invalidCodeLabel);
 			this->Controls->Add(this->airportTitle);
 			this->Controls->Add(this->airportList);
@@ -435,18 +486,24 @@ namespace OptimalFlights {
 
 		}
 #pragma endregion
-	private: void dTimerStart() {
-		dStartTime = DateTime::Now;
-		timerDjikstra->Start();
-	}
-	private: void fwTimerStart() {
-		fwStartTime = DateTime::Now;
-		timerFloyd->Start();
+	private: void timerStart() {
+		startTime = DateTime::Now;
+		dRunning = true;
+		dHeapRunning = true;
+		fRunning = true;
+		timerRuntime->Start();
 	}
 	private: void displayDjikstra() {
 		rwl->AcquireWriterLock(1);
-		resultList->Items->Add(L"Djikstra's Algorithm Path:");
+		resultList->Items->Add(L"Djikstra's Algorithm Path (Standard):");
 		resultList->Items->Add(d_path);
+		resultList->Items->Add("");
+		rwl->ReleaseWriterLock();
+	}
+	private: void displayDjikstraMinHeap() {
+		rwl->AcquireWriterLock(1);
+		resultList->Items->Add(L"Djikstra's Algorithm Path (MinHeap):");
+		resultList->Items->Add(dHeap_path);
 		resultList->Items->Add("");
 		rwl->ReleaseWriterLock();
 	}
@@ -459,6 +516,9 @@ namespace OptimalFlights {
 	}
 	private: void displayDjikstraTime() {
 		dTime->Text = d_time;
+	}
+	private: void displayDjikstraMinHeapTime() {
+		dHeapTime->Text = dHeap_time;
 	}
 	private: void displayFloydTime() {
 		fTime->Text = f_time;
@@ -505,24 +565,14 @@ namespace OptimalFlights {
 		
 		//***
 		//Start the BackgroundWorkers
-		dTimerStart();
-		fwTimerStart();
-		bkgdWorkerDjik->RunWorkerAsync();
-		bkgdWorkerFloyd->RunWorkerAsync();
+		timerStart();
+		bkgdDjikHeap->RunWorkerAsync();
+		bkgdFloyd->RunWorkerAsync();
+		bkgdDjik->RunWorkerAsync();
 		/***/
-
-		/*** Single Thread
-		computeDjikstra();
-		computeFloydWarshall();
-		/***/
-
-		//remove the first row, and revert button color.
 	}
 	private: System::Void clearButton_Click(System::Object^ sender, System::EventArgs^ e) {
-		if (timerDjikstra->Enabled || timerFloyd->Enabled) {
-			return;
-		}
-		dTime->Text = L"---------";
+		dHeapTime->Text = L"---------";
 		fTime->Text = L"---------";
 		resultList->Items->Clear();
 		cleanPaths();
@@ -530,23 +580,35 @@ namespace OptimalFlights {
 		start->Clear();
 		end->Clear();
 	}
-private: System::Void timerDjikstra_Tick(System::Object^ sender, System::EventArgs^ e) {
-	TimeSpan cur = DateTime::Now.Subtract(dStartTime);
+private: System::Void timer_Tick(System::Object^ sender, System::EventArgs^ e) {
+	TimeSpan cur = DateTime::Now.Subtract(startTime);
+	String^ strTime;
 	if (cur.TotalSeconds > 60) {
-		dTime->Text = System::Convert::ToString(Math::Floor(cur.TotalMinutes)) + "m " + System::Convert::ToString(Math::Round(cur.TotalSeconds - Math::Floor(cur.TotalMinutes) * 60, 0)) + "s";
+		 strTime = System::Convert::ToString(Math::Floor(cur.TotalMinutes)) + "m " + System::Convert::ToString(Math::Round(cur.TotalSeconds - Math::Floor(cur.TotalMinutes) * 60, 0)) + "s";
 	} else {
-		dTime->Text = System::Convert::ToString(Math::Round(cur.TotalSeconds, 2)) + "s";
+		strTime = System::Convert::ToString(Math::Round(cur.TotalSeconds, 2)) + "s";
+	}
+	bool updated = false;
+	if (dHeapRunning) {
+		dHeapTime->Text = strTime;
+		updated = true;
+	}
+	if (fRunning) {
+		fTime->Text = strTime;
+		updated = true;
+	}
+	if (dRunning) {
+		dTime->Text = strTime;
+		updated = true;
+	}
+	if (!updated) {
+		timerRuntime->Stop();
+		resultList->Items->RemoveAt(0);
+		searchButton->Enabled = true;
+		clearButton->Enabled = true;
 	}
 }
-private: System::Void timerFloyd_Tick(System::Object^ sender, System::EventArgs^ e) {
-	TimeSpan cur = DateTime::Now.Subtract(fwStartTime);
-	if (cur.TotalSeconds > 60) {
-		fTime->Text = System::Convert::ToString(Math::Floor(cur.TotalMinutes)) + "m " + System::Convert::ToString(Math::Round(cur.TotalSeconds - Math::Floor(cur.TotalMinutes) * 60, 0)) + "s";
-	} else {
-		fTime->Text = System::Convert::ToString(Math::Round(cur.TotalSeconds, 2)) + "s";
-	}
-}
-private: System::Void bkgdWorkerFloyd_DoWork(System::Object^ sender, System::ComponentModel::DoWorkEventArgs^ e) {
+private: System::Void bkgdFloyd_DoWork(System::Object^ sender, System::ComponentModel::DoWorkEventArgs^ e) {
 	//Convert to std strings
 	msclr::interop::marshal_context context;
 	std::string origin = context.marshal_as<std::string>(start->Text);
@@ -559,27 +621,18 @@ private: System::Void bkgdWorkerFloyd_DoWork(System::Object^ sender, System::Com
 	endTime = std::chrono::system_clock::now();
 	elapsed_seconds = endTime - startTime;
 
-	timerFloyd->Stop();
+	fRunning = false;
 	f_time = elapsed_seconds.count().ToString() + L"s";
-	if (fTime->InvokeRequired) {
-		fTime->Invoke(gcnew Action(this, &MyForm::displayFloydTime));
-	}
-	else {
-		displayFloydTime();
-	}
+	
+	fTime->Invoke(gcnew Action(this, &MyForm::displayFloydTime));
 
 	//Add results to list
 	f_path = gcnew String(result.toString().c_str());
 
-	if (resultList->InvokeRequired) {
-		resultList->Invoke(gcnew Action(this, &MyForm::displayFloyd));
-	}
-	else {
-		displayFloyd();
-	}
+	resultList->Invoke(gcnew Action(this, &MyForm::displayFloyd));
 	
 }
-private: System::Void bkgdWorkerDjik_DoWork(System::Object^ sender, System::ComponentModel::DoWorkEventArgs^ e) {
+private: System::Void bkgdDjikHeap_DoWork(System::Object^ sender, System::ComponentModel::DoWorkEventArgs^ e) {
 
 	//Convert to std strings
 	msclr::interop::marshal_context context;
@@ -589,47 +642,20 @@ private: System::Void bkgdWorkerDjik_DoWork(System::Object^ sender, System::Comp
 	std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
 	std::chrono::duration<double> elapsed_seconds;
 	startTime = std::chrono::system_clock::now();
-	//TODO insert function here when finished
-	FlightPath result = graph->djikPath2(origin, dest);
+	FlightPath result = graph->djikstraMinHeapPath(origin, dest);
 	endTime = std::chrono::system_clock::now();
 	elapsed_seconds = endTime - startTime;
-	timerDjikstra->Stop();
-	d_time = elapsed_seconds.count().ToString() + L"s";
-	if (dTime->InvokeRequired) {
-		dTime->Invoke(gcnew Action(this, &MyForm::displayDjikstraTime));
-	}
-	else {
-		displayDjikstraTime();
-	}
+	
+	dHeapRunning = false;
+	dHeap_time = elapsed_seconds.count().ToString() + L"s";
+
+	dTime->Invoke(gcnew Action(this, &MyForm::displayDjikstraMinHeapTime));
 	//push results into the list
 
-	d_path = gcnew String(result.toString().c_str());
+	dHeap_path = gcnew String(result.toString().c_str());
 	
-	if (resultList->InvokeRequired) {
-		resultList->Invoke(gcnew Action(this, &MyForm::displayDjikstra));
-	}
-	else {
-		displayDjikstra();
-	}
+	resultList->Invoke(gcnew Action(this, &MyForm::displayDjikstraMinHeap));
 
-}
-private: System::Void bkgdWorkerFloyd_RunWorkerCompleted(System::Object^ sender, System::ComponentModel::RunWorkerCompletedEventArgs^ e) {
-	rwl->AcquireReaderLock(1);
-	if (resultList->Items->Count >= 7) {
-		resultList->Items->RemoveAt(0);
-		searchButton->Enabled = true;
-		clearButton->Enabled = true;
-	}
-	rwl->ReleaseReaderLock();
-}
-private: System::Void bkgdWorkerDjik_RunWorkerCompleted(System::Object^ sender, System::ComponentModel::RunWorkerCompletedEventArgs^ e) {
-	rwl->AcquireReaderLock(1);
-	if (resultList->Items->Count >= 7) {
-		resultList->Items->RemoveAt(0);
-		searchButton->Enabled = true;
-		clearButton->Enabled = true;
-	}
-	rwl->ReleaseReaderLock();
 }
 private: System::Void bkgdCodeLoader_DoWork(System::Object^ sender, System::ComponentModel::DoWorkEventArgs^ e) {
 	msclr::interop::marshal_context context;
@@ -665,6 +691,28 @@ private: System::Void resetToolStripMenuItem_Click(System::Object^ sender, Syste
 private: System::Void bkgdCodeLoader_RunWorkerCompleted(System::Object^ sender, System::ComponentModel::RunWorkerCompletedEventArgs^ e) {
 	searchButton->Enabled = true;
 	clearButton->Enabled = true;
+}
+private: System::Void bkgdDjik_DoWork(System::Object^ sender, System::ComponentModel::DoWorkEventArgs^ e) {
+	//Convert to std strings
+	msclr::interop::marshal_context context;
+	std::string origin = context.marshal_as<std::string>(start->Text);
+	std::string dest = context.marshal_as<std::string>(end->Text);
+
+	std::chrono::time_point<std::chrono::system_clock> startTime, endTime;
+	std::chrono::duration<double> elapsed_seconds;
+	startTime = std::chrono::system_clock::now();
+	FlightPath result = FlightPath(); //graph->djikstraPath(origin, dest);
+	endTime = std::chrono::system_clock::now();
+	elapsed_seconds = endTime - startTime;
+
+	dRunning = false;
+	d_time = elapsed_seconds.count().ToString() + L"s";
+	dTime->Invoke(gcnew Action(this, &MyForm::displayDjikstraTime));
+	//push results into the list
+
+	d_path = gcnew String(result.toString().c_str());
+
+	resultList->Invoke(gcnew Action(this, &MyForm::displayDjikstra));
 }
 };
 }
