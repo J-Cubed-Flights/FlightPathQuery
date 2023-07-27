@@ -100,106 +100,82 @@ public:
 // generate the shortest path
 FlightPath DirectedGraph::djikstraVectorPath(string &originCode, string &destinationCode) {
     FlightPath path;
+    // Check if flights are valid
     if (!validCode(originCode) || !validCode(destinationCode)) {
         return path;
     }
-    // set to keep track of airports that have already been visited.
-    unordered_set<string> visited;
-    unordered_set<string> unvisited;
 
-    // Arrays to store distances and predecessors
-    unordered_map<string, int> flight_time;
+    // Maps used in algorithm
+    unordered_map<string, bool> visited;
+    unordered_map<string, int> time;
     unordered_map<string, string> predecessor;
 
-    // Initialize variables
-    for (auto AirportIt = airports.begin(); AirportIt != airports.end(); AirportIt++) {
-        // Adding all vertexes
-        unvisited.emplace(AirportIt->first);
-
-        // Adding all predecessors
-        if (AirportIt->first == originCode) {
-            predecessor[AirportIt->first] = "NULL";
-        } else {
-            predecessor[AirportIt->first] = originCode;
-        }
-
-        // Adding weights, if original 0; if no edge setting to -1; if edge set to weight
-        if (AirportIt->first == originCode) {
-            flight_time[AirportIt->first] = 0;
-        } else if (airports[originCode].find(AirportIt->first) == airports[originCode].end()) {
-            flight_time[AirportIt->first] = INF;
-        } else {
-            flight_time[AirportIt->first] = airports[originCode][AirportIt->first].getAverageFlightTime();
-        }
-    }
-
-    // Used in while loop
-    Airport current_airport = airports[originCode];
-    string shortest_flight;
-    int path_time = 0;
-    int time = 0;
-
-    while (!unvisited.empty()) {
-        // Find the shortest flight from origin
-        time = 0;
-        visited.emplace(current_airport.getAirportCode());
-        unvisited.erase(current_airport.getAirportCode());
-
-        for (string code : unvisited) {
-            // Check if a path exists from current airport to code
-            if (current_airport.find(code) != current_airport.end() && unvisited.find(code) != unvisited.end()) {
-                if (time == 0) {
-                    shortest_flight = code;
-                    time = current_airport[code].getAverageFlightTime();
-                }
-                if (time > current_airport[code].getAverageFlightTime()) {
-                    shortest_flight = code;
-                    time = current_airport[code].getAverageFlightTime();
-                }
-            }
-        }
-
-        // Move the shortest flight to visited
-        visited.emplace(shortest_flight);
-        unvisited.erase(shortest_flight);
-        path_time = flight_time[shortest_flight];
-
-
-        // Update adjacent flight times and predecessors.
-        for (auto it = airports[shortest_flight].begin(); it != airports[shortest_flight].end(); it++) {
-            // Check if new flight time is less than saved flight time and change if necessary
-            if (flight_time[it->first] != INF && flight_time[it->first] > path_time + current_airport[it->first].getAverageFlightTime())
-            {
-                flight_time[it->first] = path_time + current_airport[it->first].getAverageFlightTime();
-                predecessor[it->first] = shortest_flight;
-            }
-            else
-            {
-                flight_time[it->first] = current_airport[it->first].getAverageFlightTime();
-                predecessor[it->first] = shortest_flight;
-            }
-        }
-
-        // Checking if no connecting airports are available return to origin
-        // Used when dead end is reached.
-        auto it = unvisited.begin();
-        if(current_airport.getAirportCode() == shortest_flight)
-            current_airport = airports[*it];
-        else
-            current_airport = airports[shortest_flight];
-
-        //cout << current_airport.getAirportCode() << endl;
-    }
-
-    // Used to build Path once data is calculated. May cause reversed path.
-    string airport = destinationCode;
-    /*while(airport != originCode)
+    for(auto it = airports.begin(); it != airports.end(); it++)
     {
-        path.addToPath(&airports[airport]);
-        airport = predecessor[airport];
-    }*/
+        visited[it->first] = false;
+        time[it->first] = INF;
+        predecessor[it->first] = "null";
+    }
+    bool finished = false;
 
+    Airport current;
+    time[originCode] = 0;
+    // While loop until all values have been visited
+    while(finished != true)
+    {
+        int smallest = INF;
+
+        // Finding the smallest time cost from unvisited airports
+        for (auto it = visited.begin(); it != visited.end(); it++) {
+            if(!it->second && time[it->first] < smallest)
+            {
+                smallest = time[it->first];
+                current = airports[it->first];
+            }
+        }
+
+        // Make current visited
+        visited[current.getAirportCode()] = true;
+
+        //Check connecting flights
+        for (auto it = current.begin(); it != current.end(); it++) {
+            // If airport has been visited skip
+            if (visited[it->first])
+                continue;
+
+            // Relax distances and update predecessor
+            if (time[it->first] > it->second.getAverageFlightTime() + time[current.getAirportCode()]) {
+                time[it->first] = it->second.getAverageFlightTime() + time[current.getAirportCode()];
+                predecessor[it->first] = current.getAirportCode();
+            }
+        }
+
+        // Checking if all values have been visited
+        int counter = 0;
+        for (auto it = visited.begin(); it != visited.end(); it++) {
+            if (it->second) {
+                counter++;
+            }
+        }
+        if (counter == visited.size())
+        {
+            finished = true;
+        }
+    }
+
+    vector<string> stack;
+    string airport = destinationCode;
+    while (airport != originCode) {
+        stack.push_back(airport);
+        airport = predecessor[airport];
+    }
+    stack.push_back(airport);
+
+    for (int i = stack.size(); i != 0; i--) {
+        path.addToPath(airports[stack[i - 1]]);
+    }
     return path;
+
 }
 
 // generates the id's for the airport
