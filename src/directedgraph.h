@@ -151,16 +151,13 @@ FlightPath DirectedGraph::djikstraVectorPath(string &originCode, string &destina
         }
 
         // Checking if all values have been visited
-        int counter = 0;
-        for (auto it = visited.begin(); it != visited.end(); it++) {
-            if (it->second) {
-                counter++;
-            }
+        auto it = visited.begin();
+        for (it; it != visited.end(); it++) {
+            if (!it->second)
+                break;
         }
-        if (counter == visited.size())
-        {
+        if (it == visited.end())
             finished = true;
-        }
     }
 
     vector<string> stack;
